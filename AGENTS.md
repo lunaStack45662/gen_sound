@@ -61,6 +61,7 @@ input/
 
 output/
 ├── day-2/                    ← Output ngày 2
+│   ├── _log.md               ← Ghi lại nội dung đã làm (tránh trùng)
 │   ├── voiceover_21s.wav
 │   ├── extended-horse-21s-with-voiceover.mp4
 │   └── 0010_day2.txt         ← Caption TikTok + gợi ý nhạc
@@ -89,6 +90,14 @@ rồi copy output vào `output/day-N/`. Cần refactor script để nhận path
 argument thay vì hardcode.
 
 ## Working rules for agents
+
+### Day-based workflow
+
+- Mỗi ngày làm 1 video → tạo `input/day-N/` và `output/day-N/`.
+- **LUÔN tạo `output/day-N/_log.md`** ghi lại: chủ đề, SRT text, video gốc,
+  voice config, nhạc nền, caption. Đọc `_log.md` các ngày trước để KHÔNG trùng
+  nội dung/chủ đề/nhạc nền.
+- Đọc `input/day-N/` để biết assets, đọc `output/day-N/` để biết kết quả.
 
 ### Voiceover generation (`.skill/healing-audio-gen.md`)
 
