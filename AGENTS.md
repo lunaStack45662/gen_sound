@@ -10,6 +10,8 @@ SRT → Vieneu TTS voiceover WAV → mux into MP4 (+ optional ambient bed).
   (11 hard rules `R1`–`R11`, emotion-tag benchmarks, mux params)
 - `.skill/voiceover-pacing.md` — word rhythm & pacing for Vietnamese TTS
   (3-layer pause system, valley detection, inter-sentence gaps)
+- `.skill/audio-mix.md` — mix voiceover + nhạc nền BGM
+  (EQ carving, sidechain ducking tỉ lệ, verify 5 checks)
 
 **Do not re-derive these — cite the rule ID when applying it.**
 
@@ -29,40 +31,62 @@ SRT → Vieneu TTS voiceover WAV → mux into MP4 (+ optional ambient bed).
 
 ## Layout & entrypoints
 
+### Scripts (shared across all days)
+
 - `genSoundWow/create_audio_from_an_srt.py` — **production voiceover pipeline**
-  (SRT → 21 s WAV). Reference implementation of R2/R3/R4/R9.
+  (SRT → WAV). Reference implementation of R2/R3/R4/R9.
   **Note:** chưa có pacing — cần áp dụng `.skill/voiceover-pacing.md` (P1–P10)
   để thêm ngắt nhịp tự nhiên (valley detection + inter-sentence gap).
-- `genSoundWow/test_voiceover.py` — QA checks for the generated WAV
-  (sample rate, duration, peak/RMS, silence-in-gap alignment). Run after
-  every voiceover regen.
-- `adding_audio_to_video/adding_audio_to_video.py` — ffmpeg mux
-  (`-c:v copy`, aac 192 k, 44.1 kHz, stereo; R8/R10).
-  Mux cũng được document trong `.skill/voiceover-pacing.md` §6
-  (`mux_voiceover()` + `mux_with_ambient()`).
-- `main.py` — **throwaway scratch** for poking the Vieneu API. Not an
-  entrypoint; line 5 references `list_preset_voices` without parens, ignore.
-- `input/srt/`, `input/video/` — source assets.
-- `output/wav/`, `output/video/` — intended sinks (currently empty).
-- `voices.txt` — captured stdout of a one-off voice-listing run, not data.
-- `m? t? video` (mojibake filename, CP-1252 content) — Vietnamese voice-direction
-  notes for the demo clip. Leave the filename alone.
+- `genSoundWow/test_voiceover.py` — QA checks for the generated WAV.
+  Run after every voiceover regen.
+- `adding_audio_to_video/adding_audio_to_video.py` — simple ffmpeg mux
+  (`-c:v copy`, aac 192 k, 44.1 kHz, stereo; R8/R10). Voiceover only, no BGM.
+- `adding_audio_to_video/mix_audio.py` — **advanced mix**: voiceover + BGM
+  (EQ carving, sidechain ducking tỉ lệ, verify 5 checks, mux).
+  Reference implementation of M1–M8 (`.skill/audio-mix.md`).
+- `main.py` — **throwaway scratch** for poking the Vieneu API. Ignore.
+
+### Day-based structure
+
+Mỗi ngày làm 1 video → assets tổ chức theo `day-N`:
+
+```
+input/
+├── day-2/                    ← Ngày 2 (hôm nay)
+│   ├── subtitles-21s.srt
+│   └── extended_horse_21s.mp4
+└── day-3/                    ← Ngày 3 (mai)
+    ├── <srt file>
+    └── <video file>
+
+output/
+├── day-2/                    ← Output ngày 2
+│   ├── voiceover_21s.wav
+│   ├── extended-horse-21s-with-voiceover.mp4
+│   └── 0010_day2.txt         ← Caption TikTok + gợi ý nhạc
+└── day-3/
+    └── ...
+```
+
+**Legacy dirs** (deprecated, sẽ xóa dần):
+- `input/srt/`, `input/video/` — assets cũ trước day-2.
+- `output/wav/`, `output/video/` — output cũ trước day-2.
+- `outputs/` — script hardcode dir này (xem Path gotcha).
 
 ## Path gotcha (will bite on first run)
 
-The scripts hard-code paths **relative to cwd**, and they don't match the
-repo layout:
+Scripts hard-code paths **relative to cwd**, không khớp repo layout:
 
 | Script expects (cwd-relative)              | Repo actually stores               |
 | ------------------------------------------ | ---------------------------------- |
-| `subtitles-21s.srt`                        | `input/srt/subtitles-21s.srt`      |
-| `extended-horse-21s-fixed.mp4`             | `input/video/extended-horse-21s-fixed.mp4` |
-| `outputs/voiceover_21s.wav`                | `output/wav/...` (note: `output`, not `outputs`) |
-| `outputs/extended-horse-21s-with-voiceover.mp4` | `output/video/...`            |
+| `subtitles-21s.srt`                        | `input/day-2/subtitles-21s.srt`    |
+| `extended-horse-21s-fixed.mp4`             | `input/day-2/extended_horse_21s.mp4` |
+| `outputs/voiceover_21s.wav`                | `output/day-2/...`                 |
+| `outputs/extended-horse-21s-with-voiceover.mp4` | `output/day-2/...`            |
 
-Either edit the `Path(...)` constants, or stage a working dir that mirrors
-what each script expects, or run with a custom cwd. **Don't silently
-"refactor" all three scripts** — confirm with the user which layout wins.
+**Workaround hiện tại**: copy input files ra root trước khi chạy script,
+rồi copy output vào `output/day-N/`. Cần refactor script để nhận path
+argument thay vì hardcode.
 
 ## Working rules for agents
 
@@ -95,9 +119,24 @@ what each script expects, or run with a custom cwd. **Don't silently
 - Khi audio + gap vượt slot → `resolve_overflow()` (§5.2): giảm gap trước,
   rồi mới giảm micro pause.
 
-### Mux audio vào video (`.skill/voiceover-pacing.md` §6)
+### Mux voiceover vào video
 
-- Dùng `mux_voiceover(video_in, wav_in, video_out)` cho voiceover thuần.
-- Dùng `mux_with_ambient(...)` nếu có nhạc nền drone/pink noise.
+- **KHÔNG có nhạc nền** → simple mux: `adding_audio_to_video.py`
+  hoặc `voiceover-pacing.md` §6 (`mux_voiceover()`).
+- **CÓ nhạc nền** → advanced mix: `mix_audio.py`
+  hoặc `audio-mix.md` §2 (`mix_and_mux()`).
 - LUÔN: `-c:v copy` (R8), AAC 192k / 44.1kHz / stereo (R10),
   pad/trim khớp duration video.
+
+### Audio Mix — voiceover + nhạc nền (`.skill/audio-mix.md`)
+
+- Treat §1 (M1–M8) as binding. Key rules:
+  - Voiceover LUÔN là "ngôi sao", BGM chỉ hỗ trợ (M1).
+  - EQ khoét mid 300-3kHz trên BGM → nhường chỗ giọng đọc (M2).
+  - Sidechain duck **TỈ LỆ** (không on/off) — nhạc giảm theo giọng,
+    KHÔNG tắt hẳn (M3). Attack 200ms + Release 1000ms (M6).
+  - BGM volume mặc định -18dB so với voiceover peak (M4).
+  - Fade out 3s cuối video (M5), normalize peak ≤ 0.95 (M8).
+- Script: `adding_audio_to_video/mix_audio.py`
+  (CLI: `--bgm`, `--bgm-db`, `--video`, `--voiceover`, `--output`).
+- **Sau khi mix**: chạy `verify_mix()` — phải 5/5 checks pass trước khi giao.

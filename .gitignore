@@ -1,14 +1,37 @@
 # Python
+.venv/
 venv/
 __pycache__/
 *.py[cod]
 *$py.class
 
+# Generated output (legacy)
+output/wav/
+output/video/
+outputs/
+
+# Large media files in day folders (keep .srt, .txt)
+input/**/*.mp4
+input/**/*.wav
+input/**/*.mp3
+output/**/*.mp4
+output/**/*.wav
+
+# Temp copy at root
+extended-horse-21s-fixed.mp4
+subtitles-21s.srt
+
+# Model cache
+.tmp_model/
+
+# IDE / Editor
+.idea/
+
+# AI tool config
+.gemini/
+.opencode/
+MEMORY.md
+
 # PowerPoint
 ~$*.pptx
 *.pptx
-
-# Gemini CLI
-.gemini/
-MEMORY.md
-.idea/
