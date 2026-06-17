@@ -1,0 +1,127 @@
+1
+00:00:00,000 --> 00:00:02,000
+Tại sao Linux lại được dùng làm server
+phổ biến hơn Windows?
+
+2
+00:00:02,000 --> 00:00:04,000
+Stack mặc định mỗi Thread
+Windows ~1MB - Linux ~8MB (glibc)
+
+3
+00:00:04,000 --> 00:00:07,000
+1.000 threads → Windows ≈ 1GB reserved
+1.000 threads → Linux ≈ 8GB reserved
+Stack size có thể thay đổi
+
+4
+00:00:07,000 --> 00:00:09,000
+Reserve vs Physical RAM
+8MB Stack Space - Phần lớn là Unused
+
+5
+00:00:09,000 --> 00:00:11,000
+Pipeline: Reserve Stack
+→ Access Memory → Page Fault
+→ Commit Physical RAM
+
+6
+00:00:11,000 --> 00:00:14,000
+8MB Reserved ≠ 8MB Physical RAM
+RAM vật lý chỉ dùng khi thực sự ghi dữ liệu
+
+7
+00:00:14,000 --> 00:00:16,000
+Tại sao Linux chọn stack lớn?
+Code đệ quy: void recurse() { recurse(); }
+
+8
+00:00:16,000 --> 00:00:18,000
+Phù hợp ứng dụng native C/C++
+Giảm nguy cơ Stack Overflow
+Có thể cấu hình: pthread_attr_setstacksize()
+
+9
+00:00:18,000 --> 00:00:22,000
+Thread không chỉ là một hàm chạy
+Create Thread → Kernel Metadata
+→ Reserve Stack → Register Scheduler
+→ Ready To Run
+
+10
+00:00:22,000 --> 00:00:26,000
+Hệ điều hành phải tạo và quản lý
+nhiều metadata đi kèm
+
+11
+00:00:26,000 --> 00:00:30,000
+Thread không chỉ đắt vì Stack
+Memory (1MB-8MB) + Context Switch
++ Scheduler Work + Synchronization
++ Kernel Resource
+
+12
+00:00:30,000 --> 00:00:35,000
+Thread là tài nguyên đắt đỏ
+của hệ điều hành
+
+13
+00:00:35,000 --> 00:00:38,000
+Từ Thread đến Event Driven
+Thread Per Request → C10K Problem
+
+14
+00:00:38,000 --> 00:00:41,000
+C10K → Event Driven → Nginx
+
+15
+00:00:41,000 --> 00:00:43,000
+Thread-per-request khó mở rộng
+Event-driven là giải pháp
+
+16
+00:00:43,000 --> 00:00:47,000
+Process vs Thread
+Thread không phải Process thu nhỏ
+Các thread dùng chung Heap, Socket,
+File Handle, Code Segment
+
+17
+00:00:47,000 --> 00:00:51,000
+Mỗi Thread có Stack riêng
+và Register State riêng
+
+18
+00:00:51,000 --> 00:00:54,000
+OS Thread ≈ 1MB - 8MB Stack
+↓
+Go Goroutine ≈ 2KB Initial Stack
+
+19
+00:00:54,000 --> 00:00:57,000
+↓
+Thousands of Goroutines
+
+20
+00:00:57,000 --> 00:01:00,000
+.NET Async/Await - Nginx Event Loop
+Thay vì tạo OS Thread,
+dùng mô hình nhẹ hơn
+
+21
+00:01:00,000 --> 00:01:04,000
+Windows ≈ 1MB - Linux ≈ 8MB
+Reserved Memory ≠ Physical RAM
+Linux 8MB không có nghĩa là
+mỗi Thread tiêu tốn ngay 8MB RAM
+
+22
+00:01:04,000 --> 00:01:06,667
+Thread là tài nguyên đắt đỏ
+Hệ thống hiện đại xử lý nhiều việc
+trên ít OS Thread hơn
+
+23
+00:01:06,667 --> 00:01:10,000
+Comment cảm nghĩ của bạn ↓
+Cảm ơn bạn đã xem!

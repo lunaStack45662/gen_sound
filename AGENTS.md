@@ -45,6 +45,28 @@ SRT → Vieneu TTS voiceover WAV → mux into MP4 (+ optional ambient bed).
   (EQ carving, sidechain ducking tỉ lệ, verify 5 checks, mux).
   Reference implementation of M1–M8 (`.skill/audio-mix.md`).
 - `main.py` — **throwaway scratch** for poking the Vieneu API. Ignore.
+- `video_editor/trim_video.py` — **cắt video** (trim) từ timecode start → end.
+  `-c copy` (fast) hoặc `--reencode` (chính xác đến frame).
+- `video_editor/merge_videos.py` — **ghép nhiều video** (concat).
+  concat demuxer (copy, mặc định) hoặc filter_complex (`--reencode`).
+
+### Video-editing directories (riêng biệt với SRT pipeline)
+
+```
+input/
+├── video-edit/               ← Video nguồn cho trim/merge
+│   ├── clip1.mp4
+│   ├── clip2.mp4
+│   └── ...
+└── ... (day-N/ giữ nguyên)
+
+output/
+├── video-edit/               ← Kết quả trim/merge
+│   ├── clip1_trimmed.mp4
+│   ├── merged.mp4
+│   └── ...
+└── ... (day-N/ giữ nguyên)
+```
 
 ### Day-based structure
 
