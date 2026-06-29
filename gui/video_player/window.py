@@ -35,6 +35,9 @@ class VideoPlayerWindow:
         self.window.minsize(500, 400)
         self.window.after(100, self.window.lift)
 
+        self._dragging = False
+        self._drag_seg = None
+
         self._build_ui()
         self._init_player_canvas()
         self._init_segments()
