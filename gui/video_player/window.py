@@ -382,11 +382,16 @@ class VideoPlayerWindow:
             title="Chọn file âm thanh",
             filetypes=[("Audio files", "*.mp3 *.wav"), ("All files", "*.*")],
         )
+        self.window.lift()
+        self.window.focus_force()
         if not path:
             return
         seg = self.segments.add(path)
         if seg is None:
-            messagebox.showerror("Lỗi", "Không đọc được duration audio!")
+            messagebox.showerror("Lỗi", "Không đọc được duration audio!",
+                                 parent=self.window)
+            self.window.lift()
+            self.window.focus_force()
             return
         self._update_sel_label()
         self._draw_all()
@@ -420,7 +425,8 @@ class VideoPlayerWindow:
                 else:
                     raise ValueError
             except ValueError:
-                messagebox.showwarning("Lỗi", "Giá trị không hợp lệ!")
+                messagebox.showwarning("Lỗi", "Giá trị không hợp lệ!",
+                                       parent=self.window)
         ctk.CTkButton(frame, text="Lưu", command=save,
                        corner_radius=6).pack(pady=(12, 0), fill="x")
 
@@ -480,7 +486,8 @@ class VideoPlayerWindow:
     def _do_merge(self):
         segs = self.segments.get_merge_tuples()
         if not segs:
-            messagebox.showwarning("Cảnh báo", "Chưa có audio nào!")
+            messagebox.showwarning("Cảnh báo", "Chưa có audio nào!",
+                                    parent=self.window)
             return
 
         output_dir = Path("output/video")
@@ -503,16 +510,21 @@ class VideoPlayerWindow:
             self.add_btn.configure(state="normal")
             self.play_btn.configure(state="normal")
             if messagebox.askyesno("Thành công",
-                                   f"Đã tạo:\n{out_path}\n\nMở file?"):
+                                    f"Đã tạo:\n{out_path}\n\nMở file?",
+                                    parent=self.window):
                 import os
                 os.startfile(out_path)
+            self.window.lift()
+            self.window.focus_force()
 
         except Exception as e:
             self.add_btn.configure(state="normal")
             self.play_btn.configure(state="normal")
             with open(log_path, "a", encoding="utf-8") as f:
                 f.write(f"EXCEPTION: {e}\n")
-            messagebox.showerror("Lỗi", str(e))
+            messagebox.showerror("Lỗi", str(e), parent=self.window)
+            self.window.lift()
+            self.window.focus_force()
 
     # ── Cleanup ──
 
