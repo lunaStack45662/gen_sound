@@ -17,6 +17,7 @@ PythonProject/
 │   ├── app.py                     ← MainApp: Tk root + Notebook 3 tabs
 │   ├── tab_gen_audio.py           ← Tab 1: nhập text + chọn giọng + tốc độ + clone → gen .mp3
 │   ├── tab_merge_audio.py         ← Tab 2: chọn video + audio + start/end → ghép
+│   ├── video_player_window.py     ← Cửa sổ preview popup: 640x360, play/pause, seek slider  
 │   └── tab_voice_samples.py       ← Tab 3: danh sách giọng mẫu + phát thử 3 tốc độ
 ├── output/
 │   ├── audio/                     ← File .mp3 đã gen (Tab 1)
@@ -61,11 +62,22 @@ PythonProject/
 
 ### gui/tab_merge_audio.py
 - File dialog chọn video + audio
+- Canvas thumbnail 320x180 khi chọn video
+- "▶ Xem video" → mở VideoPlayerWindow popup (play/pause/seek)
 - Entry "Từ giây" / "Đến giây"
 - "Xem thông tin video" → duration, resolution, has_audio
 - "Phát thử" audio preview
 - "Ghép vào video" → Threaded ffmpeg + progress
 - Sau thành công: hỏi mở file
+
+### gui/video_player_window.py
+- Toplevel riêng, kích thước động theo tỷ lệ video (mặc định 800x480)
+- Resize được (bind Configure → redraw canvas)
+- Play / Pause / Stop
+- Seek slider độ chính xác 0.1s (giá trị float seconds)
+- Hiển thị thời gian (phút:giây.1/10)
+- Combobox tốc độ: 0.25x → 2.0x
+- Tự động phát khi mở
 
 ### gui/tab_voice_samples.py
 - Gen 11 file mẫu (10 giọng + Trúc Ly với `[cười]`) khi lần đầu chạy
@@ -78,6 +90,7 @@ PythonProject/
 - torch==2.6.0+cu124 (CUDA 12.4)
 - imageio-ffmpeg (bundled ffmpeg)
 - pygame==2.6.1 (audio playback)
+- opencv-python-headless (video frame reading)
 - transformers, onnxruntime, tokenizers
 
 ## GPU Requirements
