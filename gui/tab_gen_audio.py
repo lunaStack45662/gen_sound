@@ -268,9 +268,24 @@ class GenAudioTab(ctk.CTkFrame):
             return
         name = self.file_listbox.get(sel[0]).split("  ")[0]
         path = self.output_dir / name
-        if path.exists() and messagebox.askyesno("Xác nhận", f"Xóa {name}?"):
-            path.unlink()
-            self._refresh_file_list()
+        if not path.exists():
+            return
+        if not messagebox.askyesno("Xác nhận", f"Xóa {name}?"):
+            return
+        self.player.stop()
+        self.preview_btn.configure(image=self._img_play)
+        import time
+        for attempt in range(3):
+            try:
+                path.unlink()
+                break
+            except PermissionError:
+                if attempt < 2:
+                    time.sleep(0.3)
+                    self.player.stop()
+                else:
+                    messagebox.showerror("Lỗi", f"Không thể xoá file:\n{path}\nFile đang được sử dụng.")
+        self._refresh_file_list()
 
     def _open_output_dir(self):
         os.startfile(str(self.output_dir.resolve()))

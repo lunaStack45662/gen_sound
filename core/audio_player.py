@@ -30,8 +30,9 @@ class AudioPlayer:
             self._monitor(on_finish)
 
     def stop(self):
-        if self._available and self.is_playing:
-            pygame.mixer.music.fadeout(100)
+        if self._available:
+            pygame.mixer.music.stop()
+            pygame.mixer.music.unload()
 
     @property
     def is_playing(self):
