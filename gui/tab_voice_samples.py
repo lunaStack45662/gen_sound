@@ -9,6 +9,7 @@ from core.audio_generator import AudioGenerator
 from core.audio_player import AudioPlayer
 from gui.icons import Icons
 from gui.tooltip import add_tooltip
+from gui.theme import COLORS, SPACING
 
 SPEEDS = [("Chậm", 0.8), ("Thường", 1.0), ("Nhanh", 1.25)]
 

@@ -4,7 +4,7 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
 from core.video_merger import VideoMerger
-from gui.theme import COLORS as C
+from gui.theme import COLORS as C, SPACING as S
 from gui.icons import Icons
 from gui.tooltip import add_tooltip
 from .player import VideoPlayer
@@ -80,16 +80,27 @@ class VideoPlayerWindow:
             self.window, bg="black", highlightthickness=1,
             highlightbackground=C["border"], cursor="hand2",
         )
-        self.canvas.pack(fill="both", expand=True, padx=8, pady=(8, 2))
+        self.canvas.pack(fill="both", expand=True, padx=S["sm"], pady=(S["sm"], 2))
 
+        # ── Timeline card ──
+        timeline_bg = tk.Frame(self.window, bg=C["bg_card"],
+                               highlightbackground=C["border"],
+                               highlightthickness=1)
+        timeline_bg.pack(fill="x", padx=S["sm"], pady=(2, 4))
         self.timeline_canvas = tk.Canvas(
-            self.window, height=75, bg=C["bg_secondary"],
+            timeline_bg, height=75, bg=C["bg_secondary"],
             highlightthickness=0, cursor="hand2",
         )
-        self.timeline_canvas.pack(fill="x", padx=8, pady=(2, 4))
+        self.timeline_canvas.pack(fill="x", padx=2, pady=2)
 
-        ctrl = ttk.Frame(self.window)
-        ctrl.pack(fill="x", padx=8, pady=(0, 4))
+        # ── Controls card ──
+        ctrl_card = tk.Frame(self.window, bg=C["bg_card"],
+                             highlightbackground=C["border"],
+                             highlightthickness=1)
+        ctrl_card.pack(fill="x", padx=S["sm"], pady=(0, 2))
+        ctrl = tk.Frame(ctrl_card, bg=C["bg_card"],
+                        padx=S["sm"], pady=S["xs"])
+        ctrl.pack(fill="x")
 
         self.play_btn = ttk.Button(ctrl, image=self._img_play,
                                    command=self.toggle_play)
@@ -102,7 +113,7 @@ class VideoPlayerWindow:
         add_tooltip(self.stop_btn, "Dừng, về đầu video")
 
         self.time_label = ttk.Label(ctrl, text="0:00.0 / 0:00.0", width=16)
-        self.time_label.pack(side="left", padx=(8, 0))
+        self.time_label.pack(side="left", padx=(S["sm"], 0))
 
         ttk.Separator(ctrl, orient="vertical").pack(
             side="right", fill="y", padx=(6, 6))
@@ -120,13 +131,19 @@ class VideoPlayerWindow:
         merge_btn.pack(side="right")
         add_tooltip(merge_btn, "Ghép tất cả segment vào video")
 
-        bot = ttk.Frame(self.window)
-        bot.pack(fill="x", padx=8, pady=(0, 8))
+        # ── Bottom bar card ──
+        bot_card = tk.Frame(self.window, bg=C["bg_card"],
+                            highlightbackground=C["border"],
+                            highlightthickness=1)
+        bot_card.pack(fill="x", padx=S["sm"], pady=(0, S["sm"]))
+        bot = tk.Frame(bot_card, bg=C["bg_card"],
+                       padx=S["sm"], pady=S["xs"])
+        bot.pack(fill="x")
         self.add_btn = ttk.Button(bot, image=self._img_add,
                                   command=self._add_audio)
         self.add_btn.pack(side="left")
         add_tooltip(self.add_btn, "Thêm file audio vào timeline")
-        ttk.Label(bot, text="Thêm audio").pack(side="left", padx=(4, 10))
+        ttk.Label(bot, text="Thêm audio").pack(side="left", padx=(4, S["md"]))
         self.sel_label = ttk.Label(bot, text="")
         self.sel_label.pack(side="left")
         self.del_btn = ttk.Button(bot, image=self._img_delete,

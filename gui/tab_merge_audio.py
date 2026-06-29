@@ -5,8 +5,7 @@ from tkinter import filedialog, messagebox, ttk
 import cv2
 from PIL import Image, ImageTk
 
-from gui.theme import COLORS as C
-from gui.theme import round_rect
+from gui.theme import COLORS as C, SPACING, round_rect
 from gui.video_player import VideoPlayerWindow
 from gui.icons import Icons
 from gui.tooltip import add_tooltip
@@ -25,22 +24,31 @@ class MergeAudioTab(ttk.Frame):
         self._img_video = Icons.get("videocam", 24)
         self._img_play = Icons.get("play_arrow", 20)
 
-        frame = ttk.LabelFrame(self, text="Video", padding=12)
-        frame.pack(fill="x", padx=10, pady=(10, 5))
+        # ── Card: Video ──
+        card = tk.Frame(self, bg=C["bg_card"],
+                        highlightbackground=C["border"],
+                        highlightthickness=1)
+        card.pack(fill="x", padx=SPACING["md"], pady=(SPACING["md"], SPACING["xs"]))
+        inner = tk.Frame(card, bg=C["bg_card"],
+                         padx=SPACING["md"], pady=SPACING["md"])
+        inner.pack(fill="x")
 
-        row1 = ttk.Frame(frame)
-        row1.pack(fill="x")
+        ttk.Label(inner, text="Video", style="Heading.TLabel").pack(anchor="w")
+
+        row1 = ttk.Frame(inner)
+        row1.pack(fill="x", pady=(SPACING["sm"], 0))
         select_video_btn = ttk.Button(row1, image=self._img_video,
                                       command=self._select_video)
         select_video_btn.pack(side="left")
         add_tooltip(select_video_btn, "Chọn file video MP4/AVI/MOV")
-        ttk.Label(row1, text="Chọn video...").pack(side="left", padx=(4, 10))
+        ttk.Label(row1, text="Chọn video...").pack(side="left",
+                  padx=(SPACING["xs"], SPACING["md"]))
         self.video_label = ttk.Label(row1, text="Chưa chọn",
                                       style="Secondary.TLabel")
         self.video_label.pack(side="left")
 
-        cf = ttk.Frame(frame)
-        cf.pack(fill="x", pady=(6, 0))
+        cf = ttk.Frame(inner)
+        cf.pack(fill="x", pady=(SPACING["sm"], 0))
         self.video_canvas = tk.Canvas(
             cf, width=320, height=180, bg="black",
             highlightthickness=0,
@@ -56,17 +64,17 @@ class MergeAudioTab(ttk.Frame):
         )
 
         ctrl = ttk.Frame(cf)
-        ctrl.pack(side="left", fill="y", padx=(10, 0))
+        ctrl.pack(side="left", fill="y", padx=(SPACING["md"], 0))
         self.view_btn = ttk.Button(ctrl, image=self._img_play,
                                    command=self._open_player)
-        self.view_btn.pack(pady=(0, 5))
+        self.view_btn.pack(pady=(0, SPACING["xs"]))
         add_tooltip(self.view_btn, "Mở video player để chỉnh sửa + ghép audio")
         ttk.Label(ctrl, text="Xem video").pack()
         self.time_label = ttk.Label(ctrl, text="0.0s / 0.0s")
         self.time_label.pack()
 
         self.info_label = ttk.Label(self, text="", style="Secondary.TLabel")
-        self.info_label.pack(anchor="w", padx=10)
+        self.info_label.pack(anchor="w", padx=SPACING["md"])
 
     def _select_video(self):
         path = filedialog.askopenfilename(
