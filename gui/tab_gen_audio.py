@@ -1,18 +1,19 @@
 import os
 import tkinter as tk
 from pathlib import Path
-from tkinter import filedialog, messagebox, scrolledtext, ttk
+from tkinter import filedialog, messagebox
+
+import customtkinter as ctk
 
 from core.audio_generator import AudioGenerator
 from core.audio_player import AudioPlayer
 from gui.icons import Icons
 from gui.tooltip import add_tooltip
-from gui.theme import COLORS, SPACING
 
 
-class GenAudioTab(ttk.Frame):
+class GenAudioTab(ctk.CTkFrame):
     def __init__(self, parent, audio_gen: AudioGenerator, player: AudioPlayer):
-        super().__init__(parent)
+        super().__init__(parent, fg_color="transparent")
         self.audio_gen = audio_gen
         self.player = player
         self.output_dir = Path("output/audio")
@@ -26,126 +27,125 @@ class GenAudioTab(ttk.Frame):
         self._img_stop = Icons.get("stop", 20)
         self._img_delete = Icons.get("delete", 20)
         self._img_folder = Icons.get("folder_open", 20)
-        self._img_mic = Icons.get("mic", 20)
         self._img_add = Icons.get("add", 20)
 
         # ── Card: giọng + tốc độ ──
-        card1 = tk.Frame(self, bg=COLORS["bg_card"],
-                         highlightbackground=COLORS["border"],
-                         highlightthickness=1)
-        card1.pack(fill="x", padx=SPACING["md"], pady=(SPACING["md"], SPACING["xs"]))
-        tk.Frame(card1, bg=COLORS["bg_card"], padx=SPACING["md"],
-                 pady=SPACING["sm"]).pack()
-        inner1 = card1.winfo_children()[0]
+        card1 = ctk.CTkFrame(self, fg_color="#1E2130", border_width=1,
+                             border_color="#2A2D3E", corner_radius=8)
+        card1.pack(fill="x", padx=16, pady=(16, 4))
+        inner1 = ctk.CTkFrame(card1, fg_color="transparent")
+        inner1.pack(padx=16, pady=8)
 
-        ttk.Label(inner1, text="Giọng đọc", style="Secondary.TLabel").pack(side="left")
+        ctk.CTkLabel(inner1, text="Giọng đọc", text_color="#8B8FA8").pack(side="left")
         self.voice_var = tk.StringVar()
         voice_names = [label for label, _ in self.audio_gen.voices]
-        self.voice_combo = ttk.Combobox(
-            inner1, textvariable=self.voice_var, values=voice_names,
-            state="readonly", width=40,
+        self.voice_combo = ctk.CTkComboBox(
+            inner1, variable=self.voice_var, values=voice_names,
+            state="readonly", width=320,
         )
         if voice_names:
-            self.voice_combo.current(0)
-        self.voice_combo.pack(side="left", padx=(SPACING["sm"], 0))
+            self.voice_combo.set(voice_names[0])
+        self.voice_combo.pack(side="left", padx=(8, 0))
 
-        ttk.Label(inner1, text="Tốc độ", style="Secondary.TLabel").pack(
-            side="left", padx=(SPACING["md"], 0))
+        ctk.CTkLabel(inner1, text="Tốc độ", text_color="#8B8FA8").pack(
+            side="left", padx=(16, 0))
         self.speed_var = tk.StringVar(value="Thường (1.0x)")
-        self.speed_combo = ttk.Combobox(
-            inner1, textvariable=self.speed_var,
+        self.speed_combo = ctk.CTkComboBox(
+            inner1, variable=self.speed_var,
             values=["Chậm (0.8x)", "Thường (1.0x)", "Nhanh (1.25x)", "Rất nhanh (1.5x)"],
-            state="readonly", width=14,
+            state="readonly", width=140,
         )
-        self.speed_combo.current(1)
-        self.speed_combo.pack(side="left", padx=(SPACING["sm"], 0))
+        self.speed_combo.set("Thường (1.0x)")
+        self.speed_combo.pack(side="left", padx=(8, 0))
 
         # ── Card: Voice Cloning ──
-        card2 = tk.Frame(self, bg=COLORS["bg_card"],
-                          highlightbackground=COLORS["border"],
-                          highlightthickness=1)
-        card2.pack(fill="x", padx=SPACING["md"], pady=SPACING["xs"])
-        inner2 = tk.Frame(card2, bg=COLORS["bg_card"],
-                          padx=SPACING["md"], pady=SPACING["sm"])
-        inner2.pack()
+        card2 = ctk.CTkFrame(self, fg_color="#1E2130", border_width=1,
+                             border_color="#2A2D3E", corner_radius=8)
+        card2.pack(fill="x", padx=16, pady=4)
+        inner2 = ctk.CTkFrame(card2, fg_color="transparent")
+        inner2.pack(fill="x", padx=16, pady=8)
 
-        ttk.Label(inner2, text="Voice Cloning", style="Heading.TLabel").pack(anchor="w")
-        r2 = ttk.Frame(inner2)
-        r2.pack(fill="x", pady=(SPACING["xs"], 0))
-        ttk.Button(r2, image=self._img_add,
-                   command=self._select_ref_audio).pack(side="left")
-        ttk.Label(r2, text="Chọn file giọng mẫu (3-5s)").pack(
-            side="left", padx=(SPACING["xs"], SPACING["md"]))
-        self.ref_audio_label = ttk.Label(r2, text="Không dùng",
-                                          style="Secondary.TLabel")
+        ctk.CTkLabel(inner2, text="Voice Cloning",
+                     font=("Segoe UI", 14, "bold")).pack(anchor="w")
+        r2 = ctk.CTkFrame(inner2, fg_color="transparent")
+        r2.pack(fill="x", pady=(4, 0))
+        ctk.CTkButton(r2, image=self._img_add, text="",
+                      command=self._select_ref_audio,
+                      width=32, height=32, corner_radius=6).pack(side="left")
+        ctk.CTkLabel(r2, text="Chọn file giọng mẫu (3-5s)").pack(
+            side="left", padx=(4, 16))
+        self.ref_audio_label = ctk.CTkLabel(r2, text="Không dùng",
+                                            text_color="#8B8FA8")
         self.ref_audio_label.pack(side="left")
         self.ref_audio_path = None
 
         # ── Text input ──
-        ttk.Label(self, text="Nhập text:").pack(anchor="w",
-                  padx=SPACING["md"], pady=(SPACING["md"], SPACING["xs"]))
-        self.text_input = scrolledtext.ScrolledText(self, height=8, wrap="word",
-            bg=COLORS["bg_secondary"], fg=COLORS["text_primary"],
-            insertbackground=COLORS["text_primary"],
-            relief="flat", borderwidth=0,
-            highlightbackground=COLORS["border"],
-            highlightthickness=1, highlightcolor=COLORS["accent"],
-            font=("Segoe UI", 11))
-        self.text_input.pack(fill="both", expand=True, padx=SPACING["md"])
+        ctk.CTkLabel(self, text="Nhập text:").pack(anchor="w",
+                    padx=16, pady=(16, 4))
+        self.text_input = ctk.CTkTextbox(self, corner_radius=6,
+                                          border_width=1, border_color="#2A2D3E")
+        self.text_input.pack(fill="both", expand=True, padx=16)
 
         # ── Generate row ──
-        row2 = ttk.Frame(self)
-        row2.pack(fill="x", padx=SPACING["md"], pady=SPACING["md"])
-        self.gen_btn = ttk.Button(row2, text="Tạo âm thanh", command=self._on_generate)
+        row2 = ctk.CTkFrame(self, fg_color="transparent")
+        row2.pack(fill="x", padx=16, pady=16)
+        self.gen_btn = ctk.CTkButton(row2, text="Tạo âm thanh",
+                                      command=self._on_generate,
+                                      corner_radius=6, height=36)
         self.gen_btn.pack(side="left")
         add_tooltip(self.gen_btn, "Tạo file MP3 từ text với giọng đã chọn")
-        self.progress = ttk.Progressbar(row2, mode="indeterminate", length=200)
-        self.progress.pack(side="left", padx=(SPACING["md"], 0))
+        self.progress = ctk.CTkProgressBar(row2, width=200)
+        self.progress.pack(side="left", padx=(16, 0))
+        self.progress.set(0)
 
         # ── Card: file list ──
-        ttk.Label(self, text="Các file đã tạo:").pack(anchor="w",
-                  padx=SPACING["md"])
-        card3 = tk.Frame(self, bg=COLORS["bg_card"],
-                          highlightbackground=COLORS["border"],
-                          highlightthickness=1)
-        card3.pack(fill="both", expand=True, padx=SPACING["md"],
-                   pady=(SPACING["xs"], SPACING["md"]))
-        inner3 = tk.Frame(card3, bg=COLORS["bg_card"],
-                          padx=SPACING["sm"], pady=SPACING["sm"])
-        inner3.pack(fill="both", expand=True)
+        ctk.CTkLabel(self, text="Các file đã tạo:").pack(anchor="w", padx=16)
+        card3 = ctk.CTkFrame(self, fg_color="#1E2130", border_width=1,
+                             border_color="#2A2D3E", corner_radius=8)
+        card3.pack(fill="both", expand=True, padx=16,
+                   pady=(4, 16))
+        inner3 = ctk.CTkFrame(card3, fg_color="transparent")
+        inner3.pack(fill="both", expand=True, padx=8, pady=8)
 
-        scrollbar = ttk.Scrollbar(inner3, orient="vertical")
+        scrollbar = tk.Scrollbar(inner3, orient="vertical",
+                                 bg="#1A1D27", troughcolor="#0F1117")
         self.file_listbox = tk.Listbox(inner3, yscrollcommand=scrollbar.set,
-                                        bg=COLORS["bg_secondary"],
-                                        fg=COLORS["text_primary"],
-                                        selectbackground=COLORS["accent"],
+                                        bg="#1A1D27", fg="#F1F1F3",
+                                        selectbackground="#3B82F6",
+                                        selectforeground="#F1F1F3",
                                         relief="flat", borderwidth=0,
-                                        highlightthickness=0)
+                                        highlightthickness=0,
+                                        font=("Segoe UI", 11))
         scrollbar.config(command=self.file_listbox.yview)
         scrollbar.pack(side="right", fill="y")
         self.file_listbox.pack(side="left", fill="both", expand=True)
         self.file_listbox.bind("<Double-Button-1>", lambda e: self._play_selected())
 
         # ── File action buttons ──
-        btn_frame = ttk.Frame(self)
-        btn_frame.pack(fill="x", padx=SPACING["md"], pady=(0, SPACING["md"]))
-        self.preview_btn = ttk.Button(btn_frame, image=self._img_play,
-                                      command=self._play_selected)
-        self.preview_btn.pack(side="left", padx=(0, SPACING["xs"]))
+        btn_frame = ctk.CTkFrame(self, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=16, pady=(0, 16))
+        self.preview_btn = ctk.CTkButton(btn_frame, image=self._img_play, text="",
+                                          command=self._play_selected,
+                                          width=36, height=36, corner_radius=6)
+        self.preview_btn.pack(side="left", padx=(0, 4))
         add_tooltip(self.preview_btn, "Phát thử file đã chọn")
 
-        preview_stop_btn = ttk.Button(btn_frame, image=self._img_stop,
-                                      command=self._stop_play)
-        preview_stop_btn.pack(side="left", padx=(0, SPACING["xs"]))
+        preview_stop_btn = ctk.CTkButton(btn_frame, image=self._img_stop, text="",
+                                          command=self._stop_play,
+                                          width=36, height=36, corner_radius=6)
+        preview_stop_btn.pack(side="left", padx=(0, 4))
         add_tooltip(preview_stop_btn, "Dừng phát thử")
 
-        preview_del_btn = ttk.Button(btn_frame, image=self._img_delete,
-                                     command=self._delete_selected)
+        preview_del_btn = ctk.CTkButton(btn_frame, image=self._img_delete, text="",
+                                         command=self._delete_selected,
+                                         width=36, height=36, corner_radius=6,
+                                         fg_color="#EF4444", hover_color="#DC2626")
         preview_del_btn.pack(side="left")
         add_tooltip(preview_del_btn, "Xoá file MP3 đã chọn")
 
-        preview_folder_btn = ttk.Button(btn_frame, image=self._img_folder,
-                                        command=self._open_output_dir)
+        preview_folder_btn = ctk.CTkButton(btn_frame, image=self._img_folder, text="",
+                                            command=self._open_output_dir,
+                                            width=36, height=36, corner_radius=6)
         preview_folder_btn.pack(side="right")
         add_tooltip(preview_folder_btn, "Mở thư mục chứa file MP3")
 
@@ -156,7 +156,8 @@ class GenAudioTab(ttk.Frame):
         )
         if path:
             self.ref_audio_path = Path(path)
-            self.ref_audio_label.config(text=self.ref_audio_path.name, foreground="black")
+            self.ref_audio_label.configure(text=self.ref_audio_path.name,
+                                           text_color="#F1F1F3")
 
     def _on_generate(self):
         text = self.text_input.get("1.0", "end-1c").strip()
@@ -185,7 +186,7 @@ class GenAudioTab(ttk.Frame):
                 continue
         output_path = self.output_dir / f"audio_{idx:03d}.mp3"
 
-        self.gen_btn.config(state="disabled")
+        self.gen_btn.configure(state="disabled")
         self.progress.start()
 
         speed_text = self.speed_var.get()
@@ -215,13 +216,13 @@ class GenAudioTab(ttk.Frame):
                 adjusted.rename(path)
             except Exception as e:
                 messagebox.showwarning("Tốc độ", f"Không thể điều chỉnh tốc độ:\n{e}")
-        self.gen_btn.config(state="normal")
+        self.gen_btn.configure(state="normal")
         self.progress.stop()
         self._refresh_file_list()
         messagebox.showinfo("Thành công", f"Đã tạo:\n{path}")
 
     def _on_error(self, error):
-        self.gen_btn.config(state="normal")
+        self.gen_btn.configure(state="normal")
         self.progress.stop()
         messagebox.showerror("Lỗi", f"Tạo âm thanh thất bại:\n{error}")
 
@@ -242,14 +243,14 @@ class GenAudioTab(ttk.Frame):
             self.player.stop()
 
             def on_finish():
-                self.preview_btn.config(image=self._img_play)
+                self.preview_btn.configure(image=self._img_play)
 
             self.player.play(path, on_finish=on_finish)
-            self.preview_btn.config(image=self._img_stop)
+            self.preview_btn.configure(image=self._img_stop)
 
     def _stop_play(self):
         self.player.stop()
-        self.preview_btn.config(image=self._img_play)
+        self.preview_btn.configure(image=self._img_play)
 
     def _delete_selected(self):
         sel = self.file_listbox.curselection()

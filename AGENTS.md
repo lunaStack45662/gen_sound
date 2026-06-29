@@ -48,7 +48,7 @@ PythonProject/
 - `adjust_speed(input_path, speed_factor, output_path)` → Static, dùng ffmpeg atempo
 
 ### core/audio_player.py
-- `AudioPlayer.__init__()` → `pygame.mixer.init()` 
+- `AudioPlayer.__init__()` → `pygame.mixer.init()`, frequency=48000
 - `play(path, on_finish)` → Phát async, callback khi kết thúc
 - `stop()` → `fadeout(100ms)`
 - `is_playing` property → poll từ UI
@@ -168,14 +168,16 @@ PythonProject/
 5. **Segment sort in chain merge**: segments processed in insertion order → corrupt overlap → `sort(key=lambda s: s["start"])`
 6. **resume() không reset segments**: sau seek/edit → `_seg_triggered` còn ID cũ → segment không play → thêm `_reset_segments()` trong `resume()` và `_edit_segment.save()`
 
-## UI Styling
-- **Theme**: dark (#0F1117 bg), accent tím (#7C6FF7), ttk.Style clam
+## GUI Styling (CustomTkinter)
+- **Theme**: `ctk.set_appearance_mode("Dark")` + `set_default_color_theme("dark-blue")`
+- **Widgets**: CTkButton, CTkFrame, CTkLabel, CTkEntry, CTkComboBox, CTkTextbox — tất cả đều có `corner_radius`, `fg_color`, `hover_color`
 - **Icons**: 17 Material Design icons white 48x48 từ `assets/icons/`
 - **Tooltip**: Toplevel override-redirect sau 400ms hover, bg #252836
-- **Rounded corners**: dùng `gui/theme.round_rect()` vẽ canvas bo góc r=8
-  - Segment bars trên timeline (r = min 5px)
-  - Video canvas placeholder background (r=10)
-  - Edit dialog buttons
+- **Rounded corners**: bo góc tự nhiên nhờ CTk
+  - CTkFrame `corner_radius=8` cho card + controls
+  - CTkButton `corner_radius=6` cho mọi button
+- **Card containers**: `CTkFrame(fg_color="#1E2130", border_width=1, border_color="#2A2D3E", corner_radius=8)`
+- **Canvas**: giữ nguyên tk.Canvas cho video player + timeline
 
 ## Tests
 - `tests/test_merge_ffmpeg.py`: standalone ffmpeg merge test (3 test cases, has_audio/no_audio/silent stream)
@@ -193,3 +195,5 @@ PythonProject/
 - `49a1556` — refactor: split video_player_window.py into package, chain_merge in core
 - `4b82efc` — feat: theme dark, icons material design, tooltip cho toàn bộ button
 - `396cf00` — feat: bo góc segment + video canvas, tab icon
+- `edc41a7` — style: card containers + SPACING constants như Tailwind
+- *(chưa commit)* — migrate to CustomTkinter (full GUI rewrite)

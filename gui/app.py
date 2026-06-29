@@ -1,5 +1,4 @@
-import tkinter as tk
-from tkinter import ttk
+import customtkinter as ctk
 
 from core.audio_generator import AudioGenerator
 from core.audio_player import AudioPlayer
@@ -7,19 +6,14 @@ from core.video_merger import VideoMerger
 from gui.tab_gen_audio import GenAudioTab
 from gui.tab_merge_audio import MergeAudioTab
 from gui.tab_voice_samples import VoiceSamplesTab
-from gui.icons import Icons
-from gui.style import apply_theme
 
 
 class MainApp:
     def __init__(self):
-        self.root = tk.Tk()
+        self.root = ctk.CTk()
         self.root.title("Công cụ tạo audio và ghép video")
         self.root.geometry("820x680")
         self.root.minsize(600, 500)
-        self.root.configure(bg="#0F1117")
-
-        apply_theme(self.root)
 
         self.root.update_idletasks()
         w = self.root.winfo_width()
@@ -34,18 +28,16 @@ class MainApp:
         self.audio_gen = AudioGenerator(root=self.root)
         self.video_merger = VideoMerger()
 
-        notebook = ttk.Notebook(self.root)
-        notebook.pack(fill="both", expand=True, padx=8, pady=8)
+        tabs = ctk.CTkTabview(self.root, corner_radius=8)
+        tabs.pack(fill="both", expand=True, padx=8, pady=8)
 
-        self.tab1 = GenAudioTab(notebook, self.audio_gen, self.player)
-        self.tab2 = MergeAudioTab(notebook, self.video_merger, self.player)
-        self.tab3 = VoiceSamplesTab(notebook, self.audio_gen, self.player)
-        notebook.add(self.tab1, text="  Tạo âm thanh  ",
-                     image=Icons.get("mic", 18), compound="left")
-        notebook.add(self.tab2, text="  Ghép vào video  ",
-                     image=Icons.get("videocam", 18), compound="left")
-        notebook.add(self.tab3, text="  Nghe giọng mẫu  ",
-                     image=Icons.get("music_note", 18), compound="left")
+        tab1 = tabs.add("  Tạo âm thanh  ")
+        tab2 = tabs.add("  Ghép vào video  ")
+        tab3 = tabs.add("  Nghe giọng mẫu  ")
+
+        self.tab1 = GenAudioTab(tab1, self.audio_gen, self.player)
+        self.tab2 = MergeAudioTab(tab2, self.video_merger, self.player)
+        self.tab3 = VoiceSamplesTab(tab3, self.audio_gen, self.player)
 
     def run(self):
         self.root.protocol("WM_DELETE_WINDOW", self._on_quit)

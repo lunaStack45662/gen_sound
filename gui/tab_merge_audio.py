@@ -1,19 +1,19 @@
 import tkinter as tk
 from pathlib import Path
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, messagebox
 
+import customtkinter as ctk
 import cv2
 from PIL import Image, ImageTk
 
-from gui.theme import COLORS as C, SPACING, round_rect
 from gui.video_player import VideoPlayerWindow
 from gui.icons import Icons
 from gui.tooltip import add_tooltip
 
 
-class MergeAudioTab(ttk.Frame):
+class MergeAudioTab(ctk.CTkFrame):
     def __init__(self, parent, merger, player):
-        super().__init__(parent)
+        super().__init__(parent, fg_color="transparent")
         self.merger = merger
         self.player = player
         self.video_path = tk.StringVar()
@@ -25,56 +25,53 @@ class MergeAudioTab(ttk.Frame):
         self._img_play = Icons.get("play_arrow", 20)
 
         # ── Card: Video ──
-        card = tk.Frame(self, bg=C["bg_card"],
-                        highlightbackground=C["border"],
-                        highlightthickness=1)
-        card.pack(fill="x", padx=SPACING["md"], pady=(SPACING["md"], SPACING["xs"]))
-        inner = tk.Frame(card, bg=C["bg_card"],
-                         padx=SPACING["md"], pady=SPACING["md"])
-        inner.pack(fill="x")
+        card = ctk.CTkFrame(self, fg_color="#1E2130", border_width=1,
+                            border_color="#2A2D3E", corner_radius=8)
+        card.pack(fill="x", padx=16, pady=(16, 4))
+        inner = ctk.CTkFrame(card, fg_color="transparent")
+        inner.pack(fill="x", padx=16, pady=16)
 
-        ttk.Label(inner, text="Video", style="Heading.TLabel").pack(anchor="w")
+        ctk.CTkLabel(inner, text="Video",
+                     font=("Segoe UI", 14, "bold")).pack(anchor="w")
 
-        row1 = ttk.Frame(inner)
-        row1.pack(fill="x", pady=(SPACING["sm"], 0))
-        select_video_btn = ttk.Button(row1, image=self._img_video,
-                                      command=self._select_video)
+        row1 = ctk.CTkFrame(inner, fg_color="transparent")
+        row1.pack(fill="x", pady=(8, 0))
+        select_video_btn = ctk.CTkButton(row1, image=self._img_video, text="",
+                                          command=self._select_video,
+                                          width=32, height=32, corner_radius=6)
         select_video_btn.pack(side="left")
         add_tooltip(select_video_btn, "Chọn file video MP4/AVI/MOV")
-        ttk.Label(row1, text="Chọn video...").pack(side="left",
-                  padx=(SPACING["xs"], SPACING["md"]))
-        self.video_label = ttk.Label(row1, text="Chưa chọn",
-                                      style="Secondary.TLabel")
+        ctk.CTkLabel(row1, text="Chọn video...").pack(side="left",
+                    padx=(4, 16))
+        self.video_label = ctk.CTkLabel(row1, text="Chưa chọn",
+                                         text_color="#8B8FA8")
         self.video_label.pack(side="left")
 
-        cf = ttk.Frame(inner)
-        cf.pack(fill="x", pady=(SPACING["sm"], 0))
+        cf = ctk.CTkFrame(inner, fg_color="transparent")
+        cf.pack(fill="x", pady=(8, 0))
         self.video_canvas = tk.Canvas(
             cf, width=320, height=180, bg="black",
-            highlightthickness=0,
+            highlightthickness=1, highlightbackground="#2A2D3E",
         )
         self.video_canvas.pack(side="left")
-        round_rect(self.video_canvas, 1, 1, 319, 179, r=10,
-                   fill=C["bg_secondary"], outline=C["border"], width=1)
-        self._placeholder_rect = round_rect(self.video_canvas, 96, 70, 224, 110,
-                                             r=6, fill=C["bg_hover"])
         self.video_canvas.create_text(
-            160, 90, text="Chưa có video", fill=C["text_muted"],
+            160, 90, text="Chưa có video", fill="#4A4D61",
             font=("Segoe UI", 10), tags="placeholder",
         )
 
-        ctrl = ttk.Frame(cf)
-        ctrl.pack(side="left", fill="y", padx=(SPACING["md"], 0))
-        self.view_btn = ttk.Button(ctrl, image=self._img_play,
-                                   command=self._open_player)
-        self.view_btn.pack(pady=(0, SPACING["xs"]))
+        ctrl = ctk.CTkFrame(cf, fg_color="transparent")
+        ctrl.pack(side="left", fill="y", padx=(16, 0))
+        self.view_btn = ctk.CTkButton(ctrl, image=self._img_play, text="",
+                                       command=self._open_player,
+                                       width=36, height=36, corner_radius=6)
+        self.view_btn.pack(pady=(0, 4))
         add_tooltip(self.view_btn, "Mở video player để chỉnh sửa + ghép audio")
-        ttk.Label(ctrl, text="Xem video").pack()
-        self.time_label = ttk.Label(ctrl, text="0.0s / 0.0s")
+        ctk.CTkLabel(ctrl, text="Xem video").pack()
+        self.time_label = ctk.CTkLabel(ctrl, text="0.0s / 0.0s")
         self.time_label.pack()
 
-        self.info_label = ttk.Label(self, text="", style="Secondary.TLabel")
-        self.info_label.pack(anchor="w", padx=SPACING["md"])
+        self.info_label = ctk.CTkLabel(self, text="", text_color="#8B8FA8")
+        self.info_label.pack(anchor="w", padx=16)
 
     def _select_video(self):
         path = filedialog.askopenfilename(
@@ -84,7 +81,7 @@ class MergeAudioTab(ttk.Frame):
         if not path:
             return
         self.video_path.set(path)
-        self.video_label.config(text=Path(path).name, foreground="black")
+        self.video_label.configure(text=Path(path).name, text_color="#F1F1F3")
         if self._cap:
             self._cap.release()
         self._cap = cv2.VideoCapture(str(path))
@@ -98,7 +95,7 @@ class MergeAudioTab(ttk.Frame):
         self._show_frame(0)
         w = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         h = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.info_label.config(text=f"{duration:.1f}s  |  {w}x{h}")
+        self.info_label.configure(text=f"{duration:.1f}s  |  {w}x{h}")
 
     def _show_frame(self, frame_idx):
         if self._cap is None:
@@ -122,17 +119,17 @@ class MergeAudioTab(ttk.Frame):
         fps = self._cap.get(cv2.CAP_PROP_FPS) or 30
         duration = total_frames / fps
         sec = frame_idx / fps
-        self.time_label.config(text=f"{sec:.1f}s / {duration:.1f}s")
+        self.time_label.configure(text=f"{sec:.1f}s / {duration:.1f}s")
 
     def _open_player(self):
         path = self.video_path.get()
         if not path or not Path(path).exists():
             messagebox.showwarning("Cảnh báo", "Chưa chọn video!")
             return
-        self.view_btn.config(state="disabled")
+        self.view_btn.configure(state="disabled")
 
         def on_close():
-            self.view_btn.config(state="normal")
+            self.view_btn.configure(state="normal")
 
         VideoPlayerWindow(
             self, path,

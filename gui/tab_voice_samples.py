@@ -1,15 +1,14 @@
 import subprocess
 import tkinter as tk
 from pathlib import Path
-from tkinter import ttk
 
+import customtkinter as ctk
 import imageio_ffmpeg
 
 from core.audio_generator import AudioGenerator
 from core.audio_player import AudioPlayer
 from gui.icons import Icons
 from gui.tooltip import add_tooltip
-from gui.theme import COLORS, SPACING
 
 SPEEDS = [("Chậm", 0.8), ("Thường", 1.0), ("Nhanh", 1.25)]
 
@@ -27,13 +26,10 @@ DEFAULT_TEXT = (
     "Cảm ơn bạn đã lắng nghe."
 )
 
-# Extra variants: Trúc Ly hiển thị 2 phiên bản
-TRUCY_EXTRA = ("Trúc Ly (có [cười])", "Trúc Ly")
 
-
-class VoiceSamplesTab(ttk.Frame):
+class VoiceSamplesTab(ctk.CTkFrame):
     def __init__(self, parent, audio_gen, player: AudioPlayer):
-        super().__init__(parent)
+        super().__init__(parent, fg_color="transparent")
         self.audio_gen = audio_gen
         self.player = player
         self.sample_dir = Path("output/samples")
@@ -48,24 +44,25 @@ class VoiceSamplesTab(ttk.Frame):
         self._img_music = Icons.get("music_note", 16)
         self._img_add = Icons.get("add", 20)
 
-        header = ttk.Frame(self)
-        header.pack(fill="x", padx=10, pady=(10, 5))
-        ttk.Label(header, text="Danh sách giọng đọc mẫu",
-                  style="Heading.TLabel").pack(side="left")
+        header = ctk.CTkFrame(self, fg_color="transparent")
+        header.pack(fill="x", padx=16, pady=(16, 8))
 
-        self.gen_btn = ttk.Button(
-            header, image=self._img_add, command=self._generate_all
-        )
+        ctk.CTkLabel(header, text="Danh sách giọng đọc mẫu",
+                     font=("Segoe UI", 14, "bold")).pack(side="left")
+
+        self.gen_btn = ctk.CTkButton(header, image=self._img_add, text=" Tạo file mẫu",
+                                      command=self._generate_all,
+                                      corner_radius=6)
         self.gen_btn.pack(side="right")
         add_tooltip(self.gen_btn, "Tạo tất cả file mẫu cho các giọng")
-        ttk.Label(header, text="Tạo file mẫu").pack(side="right", padx=(0, 4))
 
-        self.progress = ttk.Progressbar(self, mode="determinate", length=400)
-        self.progress_label = ttk.Label(self, text="")
+        self.progress = ctk.CTkProgressBar(self, width=400)
+        self.progress_label = ctk.CTkLabel(self, text="")
 
-        self.canvas = tk.Canvas(self, highlightthickness=0)
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
-        self.list_frame = ttk.Frame(self.canvas)
+        self.canvas = tk.Canvas(self, highlightthickness=0, bg="#0F1117")
+        scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview,
+                                  bg="#1A1D27", troughcolor="#0F1117")
+        self.list_frame = ctk.CTkFrame(self.canvas, fg_color="transparent")
         self.list_frame.bind(
             "<Configure>",
             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")),
@@ -97,16 +94,15 @@ class VoiceSamplesTab(ttk.Frame):
             scrollbar = getattr(self, "scrollbar", None)
             if scrollbar:
                 scrollbar.pack_forget()
-            self.gen_btn.config(text="Tạo tất cả file mẫu (gen 11 giọng)")
+            self.gen_btn.configure(text="Tạo tất cả file mẫu (gen 11 giọng)")
             self.gen_btn.pack(side="right")
 
     def _generate_all(self):
         total = len(self.items)
-        self.gen_btn.config(state="disabled", text="Đang gen...")
+        self.gen_btn.configure(state="disabled", text="Đang gen...")
         self.progress_label.pack(pady=(0, 5))
-        self.progress.pack(fill="x", padx=10, pady=(0, 10))
-        self.progress["maximum"] = total
-        self.progress["value"] = 0
+        self.progress.pack(fill="x", padx=16, pady=(0, 8))
+        self.progress.set(0)
         self._gen_queue = list(self.items)
         self._gen_next()
 
@@ -120,16 +116,18 @@ class VoiceSamplesTab(ttk.Frame):
         path = self.sample_dir / f"{slug}.mp3"
 
         def on_done(p):
-            self.progress["value"] += 1
-            self.progress_label.config(
-                text=f"Đã gen {int(self.progress['value'])}/{len(self.items)}"
+            self.progress.set(
+                (self.progress.get() or 0) + (1.0 / len(self.items)))
+            self.progress_label.configure(
+                text=f"Đã gen {int((self.progress.get() or 0) * len(self.items))}/{len(self.items)}"
             )
             self._gen_next()
 
         def on_error(err):
-            self.progress["value"] += 1
-            self.progress_label.config(
-                text=f"Lỗi: {err[:50]}...  ({int(self.progress['value'])}/{len(self.items)})"
+            self.progress.set(
+                (self.progress.get() or 0) + (1.0 / len(self.items)))
+            self.progress_label.configure(
+                text=f"Lỗi: {err[:50]}..."
             )
             self._gen_next()
 
@@ -144,8 +142,8 @@ class VoiceSamplesTab(ttk.Frame):
 
         headers = ["", "Giọng", "Mô tả", "Chậm\n(0.8x)", "Thường\n(1.0x)", "Nhanh\n(1.25x)"]
         for col, h in enumerate(headers):
-            ttk.Label(self.list_frame, text=h, style="Heading.TLabel",
-                       font=("Segoe UI", 9, "bold")).grid(
+            ctk.CTkLabel(self.list_frame, text=h,
+                         font=("Segoe UI", 9, "bold")).grid(
                 row=0, column=col, sticky="w", padx=(4, 4), pady=2)
 
         self.rows = []
@@ -154,14 +152,14 @@ class VoiceSamplesTab(ttk.Frame):
             dur = self._get_duration(path) if path.exists() else 0
             desc = self._get_desc(vid)
 
-            ttk.Label(self.list_frame, image=self._img_music).grid(
+            ctk.CTkLabel(self.list_frame, image=self._img_music, text="").grid(
                 row=i + 1, column=0, padx=(4, 0), pady=3
             )
-            ttk.Label(self.list_frame, text=label, width=22, anchor="w").grid(
+            ctk.CTkLabel(self.list_frame, text=label, width=22, anchor="w").grid(
                 row=i + 1, column=1, sticky="w", padx=(4, 0)
             )
-            ttk.Label(self.list_frame, text=desc, width=24, anchor="w",
-                       style="Secondary.TLabel").grid(
+            ctk.CTkLabel(self.list_frame, text=desc, width=24, anchor="w",
+                         text_color="#8B8FA8").grid(
                 row=i + 1, column=2, sticky="w", padx=(4, 0)
             )
 
@@ -170,8 +168,9 @@ class VoiceSamplesTab(ttk.Frame):
                 def make_handler(idx=i, p=path, sf=sp_factor, sid=si):
                     return lambda: self._play_speed(idx, p, sf, sid)
 
-                btn = ttk.Button(
-                    self.list_frame, image=self._img_play, width=3,
+                btn = ctk.CTkButton(
+                    self.list_frame, image=self._img_play, text="",
+                    width=32, height=28, corner_radius=4,
                     command=make_handler(),
                 )
                 btn.grid(row=i + 1, column=3 + si, padx=(2, 2))
@@ -184,8 +183,9 @@ class VoiceSamplesTab(ttk.Frame):
             })
 
         self.canvas.pack(side="left", fill="both", expand=True)
-        self.scrollbar = ttk.Scrollbar(
-            self, orient="vertical", command=self.canvas.yview
+        self.scrollbar = tk.Scrollbar(
+            self, orient="vertical", command=self.canvas.yview,
+            bg="#1A1D27", troughcolor="#0F1117"
         )
         self.scrollbar.pack(side="right", fill="y")
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
@@ -193,14 +193,14 @@ class VoiceSamplesTab(ttk.Frame):
     def _play_speed(self, idx, orig_path, speed_factor, speed_idx):
         if self.rows[idx].get("playing_speed") == speed_idx:
             self.player.stop()
-            self.rows[idx]["btns"][speed_idx].config(image=self._img_play)
+            self.rows[idx]["btns"][speed_idx].configure(image=self._img_play)
             self.rows[idx]["playing_speed"] = None
             return
 
         self.player.stop()
         for ri in self.rows:
             for si, b in ri["btns"].items():
-                b.config(image=self._img_play)
+                b.configure(image=self._img_play)
             ri["playing_speed"] = None
 
         if speed_factor == 1.0:
@@ -215,11 +215,11 @@ class VoiceSamplesTab(ttk.Frame):
             play_path = cached
 
         def on_finish():
-            self.rows[idx]["btns"][speed_idx].config(image=self._img_play)
+            self.rows[idx]["btns"][speed_idx].configure(image=self._img_play)
             self.rows[idx]["playing_speed"] = None
 
         self.player.play(play_path, on_finish=on_finish)
-        self.rows[idx]["btns"][speed_idx].config(image=self._img_stop)
+        self.rows[idx]["btns"][speed_idx].configure(image=self._img_stop)
         self.rows[idx]["playing_speed"] = speed_idx
 
     def _slug(self, text):

@@ -1,10 +1,11 @@
 """Video player popup window — orchestrates player, segments, timeline, merge."""
 import tkinter as tk
 from pathlib import Path
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, messagebox
+
+import customtkinter as ctk
 
 from core.video_merger import VideoMerger
-from gui.theme import COLORS as C, SPACING as S
 from gui.icons import Icons
 from gui.tooltip import add_tooltip
 from .player import VideoPlayer
@@ -20,7 +21,6 @@ class VideoPlayerWindow:
         self._on_close_cb = on_close
         self._merger = merger or VideoMerger()
 
-        # Init player
         self.player = VideoPlayer(video_path, None)
         if self.player.cap is None or not self.player.cap.isOpened():
             if self.player.cap:
@@ -30,17 +30,17 @@ class VideoPlayerWindow:
             return
 
         self.video_file = video_path
-        self.window = tk.Toplevel(parent)
+        self.window = ctk.CTkToplevel(parent)
         self.window.title(f"Video Preview - {Path(video_path).name}")
         self.window.minsize(500, 400)
+        self.window.after(100, self.window.lift)
 
         self._build_ui()
-
         self._init_player_canvas()
         self._init_segments()
         self._init_timeline()
-
         self._bind_events()
+
         self.player.seek(0)
         self.player.display_frame(self.player.get_frame_at(0))
         self._draw_all()
@@ -72,83 +72,91 @@ class VideoPlayerWindow:
         self._img_delete = Icons.get("delete", 20)
         self._img_merge = Icons.get("merge", 20)
         self._img_edit = Icons.get("edit", 20)
-        self._img_volume = Icons.get("volume", 20)
-        self._img_music = Icons.get("music_note", 20)
-        self._img_close = Icons.get("close", 20)
 
         self.canvas = tk.Canvas(
             self.window, bg="black", highlightthickness=1,
-            highlightbackground=C["border"], cursor="hand2",
+            highlightbackground="#2A2D3E", cursor="hand2",
         )
-        self.canvas.pack(fill="both", expand=True, padx=S["sm"], pady=(S["sm"], 2))
+        self.canvas.pack(fill="both", expand=True, padx=8, pady=(8, 2))
 
         # ── Timeline card ──
-        timeline_bg = tk.Frame(self.window, bg=C["bg_card"],
-                               highlightbackground=C["border"],
-                               highlightthickness=1)
-        timeline_bg.pack(fill="x", padx=S["sm"], pady=(2, 4))
+        timeline_bg = ctk.CTkFrame(self.window, fg_color="#1E2130",
+                                   border_width=1, border_color="#2A2D3E",
+                                   corner_radius=8)
+        timeline_bg.pack(fill="x", padx=8, pady=(2, 4))
         self.timeline_canvas = tk.Canvas(
-            timeline_bg, height=75, bg=C["bg_secondary"],
+            timeline_bg, height=75, bg="#1A1D27",
             highlightthickness=0, cursor="hand2",
         )
         self.timeline_canvas.pack(fill="x", padx=2, pady=2)
 
         # ── Controls card ──
-        ctrl_card = tk.Frame(self.window, bg=C["bg_card"],
-                             highlightbackground=C["border"],
-                             highlightthickness=1)
-        ctrl_card.pack(fill="x", padx=S["sm"], pady=(0, 2))
-        ctrl = tk.Frame(ctrl_card, bg=C["bg_card"],
-                        padx=S["sm"], pady=S["xs"])
-        ctrl.pack(fill="x")
+        ctrl_card = ctk.CTkFrame(self.window, fg_color="#1E2130",
+                                 border_width=1, border_color="#2A2D3E",
+                                 corner_radius=8)
+        ctrl_card.pack(fill="x", padx=8, pady=(0, 2))
+        ctrl = ctk.CTkFrame(ctrl_card, fg_color="transparent")
+        ctrl.pack(fill="x", padx=8, pady=4)
 
-        self.play_btn = ttk.Button(ctrl, image=self._img_play,
-                                   command=self.toggle_play)
+        self.play_btn = ctk.CTkButton(ctrl, image=self._img_play, text="",
+                                       command=self.toggle_play,
+                                       width=36, height=36, corner_radius=6)
         self.play_btn.pack(side="left")
         add_tooltip(self.play_btn, "Phát / Tạm dừng (Space)")
 
-        self.stop_btn = ttk.Button(ctrl, image=self._img_stop,
-                                   command=self.stop)
+        self.stop_btn = ctk.CTkButton(ctrl, image=self._img_stop, text="",
+                                       command=self.stop,
+                                       width=36, height=36, corner_radius=6)
         self.stop_btn.pack(side="left", padx=(4, 0))
         add_tooltip(self.stop_btn, "Dừng, về đầu video")
 
-        self.time_label = ttk.Label(ctrl, text="0:00.0 / 0:00.0", width=16)
-        self.time_label.pack(side="left", padx=(S["sm"], 0))
+        self.time_label = ctk.CTkLabel(ctrl, text="0:00.0 / 0:00.0", width=16)
+        self.time_label.pack(side="left", padx=(8, 0))
 
-        ttk.Separator(ctrl, orient="vertical").pack(
-            side="right", fill="y", padx=(6, 6))
+        # separator
+        sep = ctk.CTkFrame(ctrl, fg_color="#2A2D3E", width=1, height=24)
+        sep.pack(side="right", padx=(6, 6))
+        sep.pack_propagate(False)
+
         self.speed_var = tk.DoubleVar(value=1.0)
-        speed_combo = ttk.Combobox(
-            ctrl, textvariable=self.speed_var, width=5, state="readonly",
-            values=[0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0],
+        speed_combo = ctk.CTkComboBox(
+            ctrl, variable=tk.StringVar(value="1.0"), width=70,
+            state="readonly",
+            values=["0.25", "0.5", "0.75", "1.0", "1.25", "1.5", "1.75", "2.0"],
         )
         speed_combo.pack(side="right")
-        ttk.Label(ctrl, text="Tốc độ:").pack(side="right", padx=(0, 3))
+        ctk.CTkLabel(ctrl, text="Tốc độ:").pack(side="right", padx=(0, 3))
         speed_combo.bind("<<ComboboxSelected>>", self._on_speed_change)
         add_tooltip(speed_combo, "Tốc độ phát video / segment")
-        merge_btn = ttk.Button(ctrl, image=self._img_merge,
-                               command=self._do_merge)
+        self._speed_combo = speed_combo
+
+        merge_btn = ctk.CTkButton(ctrl, image=self._img_merge, text="",
+                                   command=self._do_merge,
+                                   width=36, height=36, corner_radius=6)
         merge_btn.pack(side="right")
         add_tooltip(merge_btn, "Ghép tất cả segment vào video")
 
         # ── Bottom bar card ──
-        bot_card = tk.Frame(self.window, bg=C["bg_card"],
-                            highlightbackground=C["border"],
-                            highlightthickness=1)
-        bot_card.pack(fill="x", padx=S["sm"], pady=(0, S["sm"]))
-        bot = tk.Frame(bot_card, bg=C["bg_card"],
-                       padx=S["sm"], pady=S["xs"])
-        bot.pack(fill="x")
-        self.add_btn = ttk.Button(bot, image=self._img_add,
-                                  command=self._add_audio)
+        bot_card = ctk.CTkFrame(self.window, fg_color="#1E2130",
+                                border_width=1, border_color="#2A2D3E",
+                                corner_radius=8)
+        bot_card.pack(fill="x", padx=8, pady=(0, 8))
+        bot = ctk.CTkFrame(bot_card, fg_color="transparent")
+        bot.pack(fill="x", padx=8, pady=4)
+
+        self.add_btn = ctk.CTkButton(bot, image=self._img_add, text="",
+                                      command=self._add_audio,
+                                      width=36, height=36, corner_radius=6)
         self.add_btn.pack(side="left")
         add_tooltip(self.add_btn, "Thêm file audio vào timeline")
-        ttk.Label(bot, text="Thêm audio").pack(side="left", padx=(4, S["md"]))
-        self.sel_label = ttk.Label(bot, text="")
+        ctk.CTkLabel(bot, text="Thêm audio").pack(side="left", padx=(4, 16))
+        self.sel_label = ctk.CTkLabel(bot, text="")
         self.sel_label.pack(side="left")
-        self.del_btn = ttk.Button(bot, image=self._img_delete,
-                                  command=self._delete_selected,
-                                  state="disabled")
+        self.del_btn = ctk.CTkButton(bot, image=self._img_delete, text="",
+                                      command=self._delete_selected,
+                                      width=36, height=36, corner_radius=6,
+                                      fg_color="#EF4444", hover_color="#DC2626",
+                                      state="disabled")
         self.del_btn.pack(side="left", padx=(4, 0))
         add_tooltip(self.del_btn, "Xoá segment đang chọn (Delete)")
 
@@ -190,7 +198,7 @@ class VideoPlayerWindow:
         self._update_time_label()
 
     def _update_time_label(self):
-        self.time_label.config(
+        self.time_label.configure(
             text=f"{self._fmt(self.player.current_sec)} / "
                  f"{self._fmt(self.player.duration_sec)}"
         )
@@ -205,19 +213,19 @@ class VideoPlayerWindow:
     def toggle_play(self):
         if self.player.playing:
             self.player.pause()
-            self.play_btn.config(image=self._img_play)
+            self.play_btn.configure(image=self._img_play)
             self.segments.stop_all_preview()
         else:
             self.player.play(
                 on_frame=self._on_play_frame,
                 on_finish=self._on_play_finish,
             )
-            self.play_btn.config(image=self._img_pause)
+            self.play_btn.configure(image=self._img_pause)
             self.segments.reset_preview()
 
     def stop(self):
         self.player.pause()
-        self.play_btn.config(image=self._img_play)
+        self.play_btn.configure(image=self._img_play)
         self.segments.stop_all_preview()
         self.player.seek(0)
         self.player.display_frame(self.player.get_frame_at(0))
@@ -231,15 +239,18 @@ class VideoPlayerWindow:
         self.segments.update_preview(seconds)
 
     def _on_play_finish(self):
-        self.play_btn.config(image=self._img_play)
+        self.play_btn.configure(image=self._img_play)
         self.timeline.draw_playhead(self.player.current_sec)
         self.segments.stop_all_preview()
 
     def _on_speed_change(self, event=None):
-        self.player.speed = self.speed_var.get()
-        if self.player.playing:
-            self.player.pause()
-            self.toggle_play()
+        try:
+            self.player.speed = float(self._speed_combo.get())
+            if self.player.playing:
+                self.player.pause()
+                self.toggle_play()
+        except ValueError:
+            pass
 
     # ── Seek (canvas click/drag) ──
 
@@ -248,7 +259,7 @@ class VideoPlayerWindow:
         self._was_playing = self.player.playing
         if self.player.playing:
             self.player.pause()
-            self.play_btn.config(text="▶ Phát")
+            self.play_btn.configure(image=self._img_play)
             self.segments.stop_all_preview()
         self._do_seek(event.x, self.canvas.winfo_width())
 
@@ -285,7 +296,7 @@ class VideoPlayerWindow:
             self._was_playing = self.player.playing
             if self.player.playing:
                 self.player.pause()
-                self.play_btn.config(text="▶ Phát")
+                self.play_btn.configure(image=self._img_play)
                 self.segments.stop_all_preview()
             self._update_sel_label()
             self._draw_all()
@@ -298,7 +309,7 @@ class VideoPlayerWindow:
             self._was_playing = self.player.playing
             if self.player.playing:
                 self.player.pause()
-                self.play_btn.config(text="▶ Phát")
+                self.play_btn.configure(image=self._img_play)
                 self.segments.stop_all_preview()
             self._timeline_seek(event.x)
 
@@ -337,7 +348,10 @@ class VideoPlayerWindow:
             self.segments.select(seg["id"])
             self._update_sel_label()
             self._draw_all()
-            menu = tk.Menu(self.window, tearoff=0)
+            menu = tk.Menu(self.window, tearoff=0,
+                           bg="#1E2130", fg="#F1F1F3",
+                           activebackground="#252836",
+                           activeforeground="#F1F1F3")
             menu.add_command(label="Sửa...",
                              command=lambda: self._edit_segment(seg))
             menu.add_command(label="Xoá",
@@ -361,20 +375,22 @@ class VideoPlayerWindow:
         self._draw_all()
 
     def _edit_segment(self, seg):
-        dialog = tk.Toplevel(self.window)
+        dialog = ctk.CTkToplevel(self.window)
         dialog.title("Sửa audio")
-        dialog.geometry("280x150")
-        dialog.configure(bg=C["bg_primary"])
+        dialog.geometry("280x160")
         dialog.transient(self.window)
         dialog.grab_set()
-        frame = ttk.Frame(dialog, padding="12")
-        frame.pack(fill="both", expand=True)
-        ttk.Label(frame, text="Từ giây:").pack(anchor="w")
+        dialog.after(100, dialog.lift)
+
+        frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        frame.pack(fill="both", expand=True, padx=16, pady=12)
+
+        ctk.CTkLabel(frame, text="Từ giây:").pack(anchor="w")
         sv = tk.StringVar(value=f"{seg['start']:.1f}")
-        ttk.Entry(frame, textvariable=sv).pack(fill="x", pady=(2, 8))
-        ttk.Label(frame, text="Đến giây:").pack(anchor="w")
+        ctk.CTkEntry(frame, textvariable=sv).pack(fill="x", pady=(2, 8))
+        ctk.CTkLabel(frame, text="Đến giây:").pack(anchor="w")
         ev = tk.StringVar(value=f"{seg['end']:.1f}")
-        ttk.Entry(frame, textvariable=ev).pack(fill="x", pady=(2, 0))
+        ctk.CTkEntry(frame, textvariable=ev).pack(fill="x", pady=(2, 0))
 
         def save():
             try:
@@ -388,7 +404,8 @@ class VideoPlayerWindow:
                     raise ValueError
             except ValueError:
                 messagebox.showwarning("Lỗi", "Giá trị không hợp lệ!")
-        ttk.Button(frame, text="Lưu", command=save).pack(pady=(12, 0), fill="x")
+        ctk.CTkButton(frame, text="Lưu", command=save,
+                       corner_radius=6).pack(pady=(12, 0), fill="x")
 
     def _delete_selected(self):
         if self.segments.selected_id is not None:
@@ -402,13 +419,14 @@ class VideoPlayerWindow:
     def _update_sel_label(self):
         seg = self.segments.get_by_id(self.segments.selected_id)
         if seg:
-            self.sel_label.config(
-                text=f"{seg['name']}  ({seg['start']:.1f}s → {seg['end']:.1f}s)"
+            self.sel_label.configure(
+                text=f"{seg['name']}  ({seg['start']:.1f}s → {seg['end']:.1f}s)",
+                text_color="#F1F1F3",
             )
-            self.del_btn.config(state="normal")
+            self.del_btn.configure(state="normal")
         else:
-            self.sel_label.config(text="")
-            self.del_btn.config(state="disabled")
+            self.sel_label.configure(text="")
+            self.del_btn.configure(state="disabled")
 
     # ── Nudge ──
 
@@ -453,8 +471,8 @@ class VideoPlayerWindow:
         out_path = output_dir / f"{Path(self.video_file).stem}_merged.mp4"
         log_path = output_dir / "_merge_debug.log"
 
-        self.add_btn.config(state="disabled")
-        self.play_btn.config(state="disabled")
+        self.add_btn.configure(state="disabled")
+        self.play_btn.configure(state="disabled")
 
         try:
             self._merger.chain_merge(
@@ -465,16 +483,16 @@ class VideoPlayerWindow:
                 work_dir=str(output_dir),
             )
 
-            self.add_btn.config(state="normal")
-            self.play_btn.config(state="normal")
+            self.add_btn.configure(state="normal")
+            self.play_btn.configure(state="normal")
             if messagebox.askyesno("Thành công",
                                    f"Đã tạo:\n{out_path}\n\nMở file?"):
                 import os
                 os.startfile(out_path)
 
         except Exception as e:
-            self.add_btn.config(state="normal")
-            self.play_btn.config(state="normal")
+            self.add_btn.configure(state="normal")
+            self.play_btn.configure(state="normal")
             with open(log_path, "a", encoding="utf-8") as f:
                 f.write(f"EXCEPTION: {e}\n")
             messagebox.showerror("Lỗi", str(e))
