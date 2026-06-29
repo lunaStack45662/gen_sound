@@ -164,6 +164,7 @@ class VideoPlayerWindow:
             0, 0, text="", fill="#fff", font=("Segoe UI", 11, "bold"),
             anchor="center", state="hidden", tags="overlay",
         )
+        self._last_drag_time = 0
 
     # ── Events ──
 
@@ -261,29 +262,43 @@ class VideoPlayerWindow:
             self.player.pause()
             self.play_btn.configure(image=self._img_play)
             self.segments.stop_all_preview()
-        self._do_seek(event.x, self.canvas.winfo_width())
+        self._seek_light(event.x)
 
     def _canvas_drag(self, event):
         if self._dragging:
-            self._do_seek(event.x, self.canvas.winfo_width())
+            self._seek_light(event.x)
 
     def _canvas_release(self, event):
         self._dragging = False
         self.canvas.itemconfig("overlay", state="hidden")
+        self._seek_full(event.x)
         if self._was_playing:
             self.toggle_play()
 
-    def _do_seek(self, x, w):
+    def _seek_light(self, x, w=None):
+        """Chỉ cập nhật playhead + overlay, không seek frame (mượt hơn)."""
+        import time
+        now = time.time()
+        if now - self._last_drag_time < 0.03:  # throttle ~30fps
+            return
+        self._last_drag_time = now
+        seconds = self.timeline.x_to_sec(x)
+        self.timeline.draw_playhead(seconds)
+        cw = self.canvas.winfo_width()
+        self.canvas.coords("overlay", cw - 70, 20)
+        self.canvas.itemconfig("overlay",
+                               text=self._fmt(seconds), state="normal")
+        self.time_label.configure(
+            text=f"{self._fmt(seconds)} / {self._fmt(self.player.duration_sec)}")
+
+    def _seek_full(self, x, w=None):
+        """Seek frame thật + display."""
         seconds = self.timeline.x_to_sec(x)
         frame = self.player.seek(seconds)
         if frame is not None:
             self.player.display_frame(frame)
         self._update_time_label()
         self.timeline.draw_playhead(self.player.current_sec)
-        cw = self.canvas.winfo_width()
-        self.canvas.coords("overlay", cw - 70, 20)
-        self.canvas.itemconfig("overlay",
-                               text=self._fmt(seconds), state="normal")
 
     # ── Timeline interaction ──
 
@@ -311,7 +326,7 @@ class VideoPlayerWindow:
                 self.player.pause()
                 self.play_btn.configure(image=self._img_play)
                 self.segments.stop_all_preview()
-            self._timeline_seek(event.x)
+            self._seek_light(event.x, self.timeline.tl_w)
 
     def _timeline_drag(self, event):
         if self._drag_seg:
@@ -322,11 +337,13 @@ class VideoPlayerWindow:
                 self._drag_off = event.x
             self._draw_all()
         elif self._dragging:
-            self._timeline_seek(event.x)
+            self._seek_light(event.x, self.timeline.tl_w)
 
     def _timeline_release(self, event):
         self._drag_seg = None
-        self._dragging = False
+        if self._dragging:
+            self._dragging = False
+            self._seek_full(event.x, self.timeline.tl_w)
         if self._was_playing:
             self.toggle_play()
 
