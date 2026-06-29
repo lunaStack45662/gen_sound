@@ -2,16 +2,18 @@ import tkinter as tk
 from tkinter import ttk
 
 from core.audio_generator import AudioGenerator
+from core.audio_player import AudioPlayer
 from core.video_merger import VideoMerger
 from gui.tab_gen_audio import GenAudioTab
 from gui.tab_merge_audio import MergeAudioTab
+from gui.tab_voice_samples import VoiceSamplesTab
 
 
 class MainApp:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Công cụ tạo audio và ghép video")
-        self.root.geometry("780x650")
+        self.root.geometry("820x680")
         self.root.minsize(600, 500)
 
         self.root.update_idletasks()
@@ -23,16 +25,19 @@ class MainApp:
         y = (sh - h) // 2
         self.root.geometry(f"{w}x{h}+{x}+{y}")
 
+        self.player = AudioPlayer()
         self.audio_gen = AudioGenerator()
         self.video_merger = VideoMerger()
 
         notebook = ttk.Notebook(self.root)
         notebook.pack(fill="both", expand=True, padx=5, pady=5)
 
-        self.tab1 = GenAudioTab(notebook, self.audio_gen)
-        self.tab2 = MergeAudioTab(notebook, self.video_merger)
+        self.tab1 = GenAudioTab(notebook, self.audio_gen, self.player)
+        self.tab2 = MergeAudioTab(notebook, self.video_merger, self.player)
+        self.tab3 = VoiceSamplesTab(notebook, self.audio_gen, self.player)
         notebook.add(self.tab1, text="  Tạo âm thanh  ")
         notebook.add(self.tab2, text="  Ghép vào video  ")
+        notebook.add(self.tab3, text="  Nghe giọng mẫu  ")
 
     def run(self):
         self.root.mainloop()

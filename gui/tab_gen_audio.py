@@ -1,17 +1,20 @@
 import os
 import tkinter as tk
 from pathlib import Path
-from tkinter import messagebox, scrolledtext, ttk
+from tkinter import filedialog, messagebox, scrolledtext, ttk
 
 from core.audio_generator import AudioGenerator
+from core.audio_player import AudioPlayer
 
 
 class GenAudioTab(ttk.Frame):
-    def __init__(self, parent, audio_gen: AudioGenerator):
+    def __init__(self, parent, audio_gen: AudioGenerator, player: AudioPlayer):
         super().__init__(parent)
         self.audio_gen = audio_gen
+        self.player = player
         self.output_dir = Path("output/audio")
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self._selected_path = None
         self._build_ui()
         self._refresh_file_list()
 
@@ -23,11 +26,29 @@ class GenAudioTab(ttk.Frame):
         voice_names = [label for label, _ in self.audio_gen.voices]
         self.voice_combo = ttk.Combobox(
             row1, textvariable=self.voice_var, values=voice_names,
-            state="readonly", width=45,
+            state="readonly", width=40,
         )
         if voice_names:
             self.voice_combo.current(0)
         self.voice_combo.pack(side="left", padx=(5, 0))
+
+        ttk.Label(row1, text="  Tốc độ:").pack(side="left")
+        self.speed_var = tk.StringVar(value="Thường (1.0x)")
+        self.speed_combo = ttk.Combobox(
+            row1, textvariable=self.speed_var,
+            values=["Chậm (0.8x)", "Thường (1.0x)", "Nhanh (1.25x)", "Rất nhanh (1.5x)"],
+            state="readonly", width=14,
+        )
+        self.speed_combo.current(1)
+        self.speed_combo.pack(side="left", padx=(5, 0))
+
+        clone_frame = ttk.LabelFrame(self, text="Voice Cloning (tùy chọn)", padding=5)
+        clone_frame.pack(fill="x", padx=10, pady=(5, 5))
+        ttk.Button(clone_frame, text="Chọn file giọng mẫu (3-5s)...",
+                   command=self._select_ref_audio).pack(side="left")
+        self.ref_audio_label = ttk.Label(clone_frame, text="Không dùng", foreground="gray")
+        self.ref_audio_label.pack(side="left", padx=(10, 0))
+        self.ref_audio_path = None
 
         ttk.Label(self, text="Nhập text:").pack(anchor="w", padx=10, pady=(10, 2))
         self.text_input = scrolledtext.ScrolledText(self, height=8, wrap="word")
@@ -53,7 +74,9 @@ class GenAudioTab(ttk.Frame):
 
         btn_frame = ttk.Frame(self)
         btn_frame.pack(fill="x", padx=10, pady=(0, 10))
-        ttk.Button(btn_frame, text="▶ Phát thử", command=self._play_selected).pack(
+        self.preview_btn = ttk.Button(btn_frame, text="▶ Phát thử", command=self._play_selected)
+        self.preview_btn.pack(side="left", padx=(0, 5))
+        ttk.Button(btn_frame, text="⏹ Dừng", command=self._stop_play).pack(
             side="left", padx=(0, 5)
         )
         ttk.Button(btn_frame, text="Xóa", command=self._delete_selected).pack(
@@ -62,6 +85,15 @@ class GenAudioTab(ttk.Frame):
         ttk.Button(
             btn_frame, text="Mở thư mục", command=self._open_output_dir
         ).pack(side="right")
+
+    def _select_ref_audio(self):
+        path = filedialog.askopenfilename(
+            title="Chọn file giọng mẫu (WAV/MP3, 3-5s)",
+            filetypes=[("Audio files", "*.wav *.mp3"), ("All files", "*.*")],
+        )
+        if path:
+            self.ref_audio_path = Path(path)
+            self.ref_audio_label.config(text=self.ref_audio_path.name, foreground="black")
 
     def _on_generate(self):
         text = self.text_input.get("1.0", "end-1c").strip()
@@ -85,15 +117,33 @@ class GenAudioTab(ttk.Frame):
         self.gen_btn.config(state="disabled")
         self.progress.start()
 
+        speed_text = self.speed_var.get()
+        speed_map = {"Chậm (0.8x)": 0.8, "Thường (1.0x)": 1.0,
+                      "Nhanh (1.25x)": 1.25, "Rất nhanh (1.5x)": 1.5}
+        target_speed = speed_map.get(speed_text, 1.0)
+
+        self._pending_speed = target_speed
+        self._pending_mp3 = output_path
+
         self.audio_gen.generate(
             text=text,
             voice_name=voice_id,
             output_path=output_path,
+            ref_audio=self.ref_audio_path,
             on_done=self._on_done,
             on_error=self._on_error,
         )
 
     def _on_done(self, path):
+        apply_speed = getattr(self, "_pending_speed", 1.0)
+        if apply_speed != 1.0:
+            try:
+                adjusted = path.with_name(f"{path.stem}_speed{apply_speed}{path.suffix}")
+                AudioGenerator.adjust_speed(path, apply_speed, adjusted)
+                path.unlink()
+                adjusted.rename(path)
+            except Exception as e:
+                messagebox.showwarning("Tốc độ", f"Không thể điều chỉnh tốc độ:\n{e}")
         self.gen_btn.config(state="normal")
         self.progress.stop()
         self._refresh_file_list()
@@ -117,7 +167,18 @@ class GenAudioTab(ttk.Frame):
         name = self.file_listbox.get(sel[0]).split("  ")[0]
         path = self.output_dir / name
         if path.exists():
-            os.startfile(str(path))
+            self._selected_path = path
+            self.player.stop()
+
+            def on_finish():
+                self.preview_btn.config(text="▶ Phát thử")
+
+            self.player.play(path, on_finish=on_finish)
+            self.preview_btn.config(text="⏸ Đang phát")
+
+    def _stop_play(self):
+        self.player.stop()
+        self.preview_btn.config(text="▶ Phát thử")
 
     def _delete_selected(self):
         sel = self.file_listbox.curselection()

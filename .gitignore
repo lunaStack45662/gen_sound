@@ -22,6 +22,9 @@ output/**/*.mp3
 extended-horse-21s-fixed.mp4
 subtitles-21s.srt
 
+# Speed variant cache
+output/samples/.cache/
+
 # Model cache
 .tmp_model/
 

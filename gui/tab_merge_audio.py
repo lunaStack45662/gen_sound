@@ -3,13 +3,15 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
+from core.audio_player import AudioPlayer
 from core.video_merger import VideoMerger
 
 
 class MergeAudioTab(ttk.Frame):
-    def __init__(self, parent, merger: VideoMerger):
+    def __init__(self, parent, merger: VideoMerger, player: AudioPlayer):
         super().__init__(parent)
         self.merger = merger
+        self.player = player
         self.video_path = tk.StringVar()
         self.audio_path = tk.StringVar()
         self._build_ui()
@@ -30,6 +32,13 @@ class MergeAudioTab(ttk.Frame):
         ).pack(side="left")
         self.audio_label = ttk.Label(frame2, text="Chưa chọn", foreground="gray")
         self.audio_label.pack(side="left", padx=(10, 0))
+        self.audio_preview_btn = ttk.Button(
+            frame2, text="▶ Phát thử", command=self._preview_audio
+        )
+        self.audio_preview_btn.pack(side="left", padx=(10, 0))
+        ttk.Button(
+            frame2, text="⏹ Dừng", command=lambda: self.player.stop()
+        ).pack(side="left")
 
         frame3 = ttk.LabelFrame(self, text="Thời gian ghép", padding=10)
         frame3.pack(fill="x", padx=10, pady=10)
@@ -79,6 +88,19 @@ class MergeAudioTab(ttk.Frame):
         if path:
             self.audio_path.set(path)
             self.audio_label.config(text=Path(path).name, foreground="black")
+
+    def _preview_audio(self):
+        path = self.audio_path.get()
+        if not path or not Path(path).exists():
+            messagebox.showwarning("Cảnh báo", "Chưa chọn file audio!")
+            return
+        self.player.stop()
+
+        def on_finish():
+            self.audio_preview_btn.config(text="▶ Phát thử")
+
+        self.player.play(path, on_finish=on_finish)
+        self.audio_preview_btn.config(text="⏸ Đang phát")
 
     def _show_info(self):
         path = self.video_path.get()

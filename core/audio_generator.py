@@ -23,22 +23,27 @@ class AudioGenerator:
     def voices(self):
         return list(self._voices)
 
-    def generate(self, text, voice_name, output_path, on_done=None, on_error=None):
+    def generate(self, text, voice_name, output_path,
+                  ref_audio=None, on_done=None, on_error=None):
         output_path = Path(output_path)
         if not text.strip():
             raise ValueError("Text cannot be empty")
 
         thread = threading.Thread(
             target=self._generate_worker,
-            args=(text, voice_name, output_path, on_done, on_error),
+            args=(text, voice_name, output_path, ref_audio, on_done, on_error),
             daemon=True,
         )
         thread.start()
         return thread
 
-    def _generate_worker(self, text, voice_name, output_path, on_done, on_error):
+    def _generate_worker(self, text, voice_name, output_path, ref_audio,
+                         on_done, on_error):
         try:
-            audio = self._tts.infer(text=text, voice=voice_name)
+            kwargs = dict(text=text, voice=voice_name)
+            if ref_audio:
+                kwargs["ref_audio"] = str(ref_audio)
+            audio = self._tts.infer(**kwargs)
             wav_path = output_path.with_suffix(".wav")
             self._tts.save(audio, str(wav_path))
             mp3_path = output_path.with_suffix(".mp3")
@@ -57,3 +62,20 @@ class AudioGenerator:
             capture_output=True,
             check=True,
         )
+
+    @staticmethod
+    def adjust_speed(input_path, speed_factor, output_path):
+        input_path = Path(input_path)
+        output_path = Path(output_path)
+        if not input_path.exists():
+            raise FileNotFoundError(f"Khong tim thay: {input_path}")
+
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+        subprocess.run(
+            [ffmpeg, "-y", "-i", str(input_path),
+             "-filter:a", f"atempo={speed_factor}",
+             "-b:a", "192k", str(output_path)],
+            capture_output=True, check=True,
+        )
+        return output_path
