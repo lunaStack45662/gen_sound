@@ -5,7 +5,7 @@ from tkinter import filedialog, messagebox, ttk
 
 import pygame
 
-from .timeline import COLORS
+from gui.theme import SEGMENT_COLORS
 
 
 class SegmentManager:
@@ -65,7 +65,7 @@ class SegmentManager:
             "name": Path(path).name,
             "start": last_end,
             "end": min(last_end + dur, self.duration_sec),
-            "color": COLORS[self._seg_id % len(COLORS)],
+            "color": SEGMENT_COLORS[self._seg_id % len(SEGMENT_COLORS)],
         }
         self._segments.append(seg)
         self._seg_sounds[seg["id"]] = self._load_sound(path)

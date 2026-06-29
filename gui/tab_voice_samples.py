@@ -7,6 +7,8 @@ import imageio_ffmpeg
 
 from core.audio_generator import AudioGenerator
 from core.audio_player import AudioPlayer
+from gui.icons import Icons
+from gui.tooltip import add_tooltip
 
 SPEEDS = [("Chậm", 0.8), ("Thường", 1.0), ("Nhanh", 1.25)]
 
@@ -40,16 +42,22 @@ class VoiceSamplesTab(ttk.Frame):
         self._check_samples()
 
     def _build_ui(self):
+        self._img_play = Icons.get("play_arrow", 16)
+        self._img_stop = Icons.get("stop", 16)
+        self._img_music = Icons.get("music_note", 16)
+        self._img_add = Icons.get("add", 20)
+
         header = ttk.Frame(self)
         header.pack(fill="x", padx=10, pady=(10, 5))
-        ttk.Label(header, text="Danh sách giọng đọc mẫu", font=("", 12, "bold")).pack(
-            side="left"
-        )
+        ttk.Label(header, text="Danh sách giọng đọc mẫu",
+                  style="Heading.TLabel").pack(side="left")
 
         self.gen_btn = ttk.Button(
-            header, text="Tạo tất cả file mẫu", command=self._generate_all
+            header, image=self._img_add, command=self._generate_all
         )
         self.gen_btn.pack(side="right")
+        add_tooltip(self.gen_btn, "Tạo tất cả file mẫu cho các giọng")
+        ttk.Label(header, text="Tạo file mẫu").pack(side="right", padx=(0, 4))
 
         self.progress = ttk.Progressbar(self, mode="determinate", length=400)
         self.progress_label = ttk.Label(self, text="")
@@ -133,25 +141,26 @@ class VoiceSamplesTab(ttk.Frame):
         for w in self.list_frame.winfo_children():
             w.destroy()
 
-        headers = ["", "Giọng", "Mô tả", "Chậm (0.8x)", "▶ Thường", "Nhanh (1.25x)"]
+        headers = ["", "Giọng", "Mô tả", "Chậm\n(0.8x)", "Thường\n(1.0x)", "Nhanh\n(1.25x)"]
         for col, h in enumerate(headers):
-            lbl = ttk.Label(self.list_frame, text=h, font=("", 9, "bold"))
-            lbl.grid(row=0, column=col, sticky="w", padx=(4, 4), pady=2)
+            ttk.Label(self.list_frame, text=h, style="Heading.TLabel",
+                       font=("Segoe UI", 9, "bold")).grid(
+                row=0, column=col, sticky="w", padx=(4, 4), pady=2)
 
         self.rows = []
         for i, (label, vid, text, slug) in enumerate(self.items):
             path = self.sample_dir / f"{slug}.mp3"
             dur = self._get_duration(path) if path.exists() else 0
             desc = self._get_desc(vid)
-            display_label = label
 
-            ttk.Label(self.list_frame, text="♫").grid(
+            ttk.Label(self.list_frame, image=self._img_music).grid(
                 row=i + 1, column=0, padx=(4, 0), pady=3
             )
-            ttk.Label(self.list_frame, text=display_label, width=22, anchor="w").grid(
+            ttk.Label(self.list_frame, text=label, width=22, anchor="w").grid(
                 row=i + 1, column=1, sticky="w", padx=(4, 0)
             )
-            ttk.Label(self.list_frame, text=desc, width=24, anchor="w").grid(
+            ttk.Label(self.list_frame, text=desc, width=24, anchor="w",
+                       style="Secondary.TLabel").grid(
                 row=i + 1, column=2, sticky="w", padx=(4, 0)
             )
 
@@ -161,10 +170,11 @@ class VoiceSamplesTab(ttk.Frame):
                     return lambda: self._play_speed(idx, p, sf, sid)
 
                 btn = ttk.Button(
-                    self.list_frame, text="▶", width=3,
+                    self.list_frame, image=self._img_play, width=3,
                     command=make_handler(),
                 )
                 btn.grid(row=i + 1, column=3 + si, padx=(2, 2))
+                add_tooltip(btn, f"Phát {sp_label.lower()} ({sp_factor}x)")
                 btns[si] = btn
 
             self.rows.append({
@@ -182,14 +192,14 @@ class VoiceSamplesTab(ttk.Frame):
     def _play_speed(self, idx, orig_path, speed_factor, speed_idx):
         if self.rows[idx].get("playing_speed") == speed_idx:
             self.player.stop()
-            self.rows[idx]["btns"][speed_idx].config(text="▶")
+            self.rows[idx]["btns"][speed_idx].config(image=self._img_play)
             self.rows[idx]["playing_speed"] = None
             return
 
         self.player.stop()
         for ri in self.rows:
             for si, b in ri["btns"].items():
-                b.config(text="▶")
+                b.config(image=self._img_play)
             ri["playing_speed"] = None
 
         if speed_factor == 1.0:
@@ -204,11 +214,11 @@ class VoiceSamplesTab(ttk.Frame):
             play_path = cached
 
         def on_finish():
-            self.rows[idx]["btns"][speed_idx].config(text="▶")
+            self.rows[idx]["btns"][speed_idx].config(image=self._img_play)
             self.rows[idx]["playing_speed"] = None
 
         self.player.play(play_path, on_finish=on_finish)
-        self.rows[idx]["btns"][speed_idx].config(text="⏹")
+        self.rows[idx]["btns"][speed_idx].config(image=self._img_stop)
         self.rows[idx]["playing_speed"] = speed_idx
 
     def _slug(self, text):

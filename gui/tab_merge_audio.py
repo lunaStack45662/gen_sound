@@ -6,6 +6,8 @@ import cv2
 from PIL import Image, ImageTk
 
 from gui.video_player import VideoPlayerWindow
+from gui.icons import Icons
+from gui.tooltip import add_tooltip
 
 
 class MergeAudioTab(ttk.Frame):
@@ -18,34 +20,46 @@ class MergeAudioTab(ttk.Frame):
         self._build_ui()
 
     def _build_ui(self):
-        frame = ttk.LabelFrame(self, text="Video", padding=10)
+        self._img_video = Icons.get("videocam", 24)
+        self._img_play = Icons.get("play_arrow", 20)
+
+        frame = ttk.LabelFrame(self, text="Video", padding=12)
         frame.pack(fill="x", padx=10, pady=(10, 5))
 
         row1 = ttk.Frame(frame)
         row1.pack(fill="x")
-        ttk.Button(row1, text="Chọn video...", command=self._select_video).pack(side="left")
-        self.video_label = ttk.Label(row1, text="Chưa chọn", foreground="gray")
-        self.video_label.pack(side="left", padx=(10, 0))
+        select_video_btn = ttk.Button(row1, image=self._img_video,
+                                      command=self._select_video)
+        select_video_btn.pack(side="left")
+        add_tooltip(select_video_btn, "Chọn file video MP4/AVI/MOV")
+        ttk.Label(row1, text="Chọn video...").pack(side="left", padx=(4, 10))
+        self.video_label = ttk.Label(row1, text="Chưa chọn",
+                                      style="Secondary.TLabel")
+        self.video_label.pack(side="left")
 
         cf = ttk.Frame(frame)
         cf.pack(fill="x", pady=(6, 0))
         self.video_canvas = tk.Canvas(
             cf, width=320, height=180, bg="black",
-            highlightthickness=1, highlightbackground="#888",
+            highlightthickness=1, highlightbackground="#2A2D3E",
         )
         self.video_canvas.pack(side="left")
         self.video_canvas.create_text(
-            160, 90, text="Chưa có video", fill="#666", font=("", 10), tags="placeholder",
+            160, 90, text="Chưa có video", fill="#4A4D61", font=("Segoe UI", 10),
+            tags="placeholder",
         )
 
         ctrl = ttk.Frame(cf)
         ctrl.pack(side="left", fill="y", padx=(10, 0))
-        self.view_btn = ttk.Button(ctrl, text="▶ Xem video", command=self._open_player, width=12)
+        self.view_btn = ttk.Button(ctrl, image=self._img_play,
+                                   command=self._open_player)
         self.view_btn.pack(pady=(0, 5))
+        add_tooltip(self.view_btn, "Mở video player để chỉnh sửa + ghép audio")
+        ttk.Label(ctrl, text="Xem video").pack()
         self.time_label = ttk.Label(ctrl, text="0.0s / 0.0s")
         self.time_label.pack()
 
-        self.info_label = ttk.Label(self, text="", foreground="gray")
+        self.info_label = ttk.Label(self, text="", style="Secondary.TLabel")
         self.info_label.pack(anchor="w", padx=10)
 
     def _select_video(self):

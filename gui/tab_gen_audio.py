@@ -5,6 +5,8 @@ from tkinter import filedialog, messagebox, scrolledtext, ttk
 
 from core.audio_generator import AudioGenerator
 from core.audio_player import AudioPlayer
+from gui.icons import Icons
+from gui.tooltip import add_tooltip
 
 
 class GenAudioTab(ttk.Frame):
@@ -19,6 +21,13 @@ class GenAudioTab(ttk.Frame):
         self._refresh_file_list()
 
     def _build_ui(self):
+        self._img_play = Icons.get("play_arrow", 20)
+        self._img_stop = Icons.get("stop", 20)
+        self._img_delete = Icons.get("delete", 20)
+        self._img_folder = Icons.get("folder_open", 20)
+        self._img_mic = Icons.get("mic", 20)
+        self._img_add = Icons.get("add", 20)
+
         row1 = ttk.Frame(self)
         row1.pack(fill="x", padx=10, pady=(10, 5))
         ttk.Label(row1, text="Giọng đọc:").pack(side="left")
@@ -42,12 +51,15 @@ class GenAudioTab(ttk.Frame):
         self.speed_combo.current(1)
         self.speed_combo.pack(side="left", padx=(5, 0))
 
-        clone_frame = ttk.LabelFrame(self, text="Voice Cloning (tùy chọn)", padding=5)
+        clone_frame = ttk.LabelFrame(self, text="Voice Cloning (tùy chọn)", padding=8)
         clone_frame.pack(fill="x", padx=10, pady=(5, 5))
-        ttk.Button(clone_frame, text="Chọn file giọng mẫu (3-5s)...",
+        ttk.Button(clone_frame, image=self._img_add,
                    command=self._select_ref_audio).pack(side="left")
-        self.ref_audio_label = ttk.Label(clone_frame, text="Không dùng", foreground="gray")
-        self.ref_audio_label.pack(side="left", padx=(10, 0))
+        ttk.Label(clone_frame, text="Chọn file giọng mẫu (3-5s)").pack(
+            side="left", padx=(4, 10))
+        self.ref_audio_label = ttk.Label(clone_frame, text="Không dùng",
+                                          style="Secondary.TLabel")
+        self.ref_audio_label.pack(side="left")
         self.ref_audio_path = None
 
         ttk.Label(self, text="Nhập text:").pack(anchor="w", padx=10, pady=(10, 2))
@@ -58,6 +70,7 @@ class GenAudioTab(ttk.Frame):
         row2.pack(fill="x", padx=10, pady=10)
         self.gen_btn = ttk.Button(row2, text="Tạo âm thanh", command=self._on_generate)
         self.gen_btn.pack(side="left")
+        add_tooltip(self.gen_btn, "Tạo file MP3 từ text với giọng đã chọn")
         self.progress = ttk.Progressbar(row2, mode="indeterminate", length=200)
         self.progress.pack(side="left", padx=(10, 0))
 
@@ -66,7 +79,11 @@ class GenAudioTab(ttk.Frame):
         list_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
         scrollbar = ttk.Scrollbar(list_frame, orient="vertical")
-        self.file_listbox = tk.Listbox(list_frame, yscrollcommand=scrollbar.set)
+        self.file_listbox = tk.Listbox(list_frame, yscrollcommand=scrollbar.set,
+                                        bg="#1A1D27", fg="#F1F1F3",
+                                        selectbackground="#7C6FF7",
+                                        relief="flat", borderwidth=0,
+                                        highlightthickness=0)
         scrollbar.config(command=self.file_listbox.yview)
         scrollbar.pack(side="right", fill="y")
         self.file_listbox.pack(side="left", fill="both", expand=True)
@@ -74,17 +91,25 @@ class GenAudioTab(ttk.Frame):
 
         btn_frame = ttk.Frame(self)
         btn_frame.pack(fill="x", padx=10, pady=(0, 10))
-        self.preview_btn = ttk.Button(btn_frame, text="▶ Phát thử", command=self._play_selected)
+        self.preview_btn = ttk.Button(btn_frame, image=self._img_play,
+                                      command=self._play_selected)
         self.preview_btn.pack(side="left", padx=(0, 5))
-        ttk.Button(btn_frame, text="⏹ Dừng", command=self._stop_play).pack(
-            side="left", padx=(0, 5)
-        )
-        ttk.Button(btn_frame, text="Xóa", command=self._delete_selected).pack(
-            side="left"
-        )
-        ttk.Button(
-            btn_frame, text="Mở thư mục", command=self._open_output_dir
-        ).pack(side="right")
+        add_tooltip(self.preview_btn, "Phát thử file đã chọn")
+
+        preview_stop_btn = ttk.Button(btn_frame, image=self._img_stop,
+                                      command=self._stop_play)
+        preview_stop_btn.pack(side="left", padx=(0, 5))
+        add_tooltip(preview_stop_btn, "Dừng phát thử")
+
+        preview_del_btn = ttk.Button(btn_frame, image=self._img_delete,
+                                     command=self._delete_selected)
+        preview_del_btn.pack(side="left")
+        add_tooltip(preview_del_btn, "Xoá file MP3 đã chọn")
+
+        preview_folder_btn = ttk.Button(btn_frame, image=self._img_folder,
+                                        command=self._open_output_dir)
+        preview_folder_btn.pack(side="right")
+        add_tooltip(preview_folder_btn, "Mở thư mục chứa file MP3")
 
     def _select_ref_audio(self):
         path = filedialog.askopenfilename(
@@ -179,14 +204,14 @@ class GenAudioTab(ttk.Frame):
             self.player.stop()
 
             def on_finish():
-                self.preview_btn.config(text="▶ Phát thử")
+                self.preview_btn.config(image=self._img_play)
 
             self.player.play(path, on_finish=on_finish)
-            self.preview_btn.config(text="⏸ Đang phát")
+            self.preview_btn.config(image=self._img_stop)
 
     def _stop_play(self):
         self.player.stop()
-        self.preview_btn.config(text="▶ Phát thử")
+        self.preview_btn.config(image=self._img_play)
 
     def _delete_selected(self):
         sel = self.file_listbox.curselection()

@@ -3,7 +3,7 @@ from PIL import Image, ImageTk
 
 import cv2
 
-COLORS = ["#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda0dd", "#98d8c8"]
+from gui.theme import COLORS as C, SEGMENT_COLORS
 
 
 class TimelineRenderer:
@@ -47,7 +47,7 @@ class TimelineRenderer:
         self._tl_w = max(cw, 10)
 
         # Thumbnails track
-        self.canvas.create_rectangle(0, 0, cw, 33, fill="#ccc", outline="")
+        self.canvas.create_rectangle(0, 0, cw, 33, fill=C["bg_hover"], outline="")
         n = max(len(self._thumbs), 1)
         tw = cw / n
         for i, photo in enumerate(self._thumbs):
@@ -57,9 +57,9 @@ class TimelineRenderer:
 
         # Track background
         y0, y1 = self.SEG_TRACK_Y0, self.SEG_TRACK_Y1
-        self.canvas.create_rectangle(0, y0, cw, y1, fill="#2a2a2a", outline="")
+        self.canvas.create_rectangle(0, y0, cw, y1, fill=C["bg_secondary"], outline=C["border"])
         self.canvas.create_text(
-            6, (y0 + y1) // 2, text="♪", fill="#888", anchor="w", font=("", 10),
+            6, (y0 + y1) // 2, text="♪", fill=C["text_muted"], anchor="w", font=("", 10),
         )
 
         # Audio segments
@@ -69,18 +69,19 @@ class TimelineRenderer:
                 ex = int((seg["end"] / self.duration_sec) * cw)
                 if ex - sx < 6:
                     ex = sx + 6
-                color = seg.get("color", "#ff6b6b")
-                outline = "#fff" if seg.get("id") == selected_id else "#333"
+                color = seg.get("color", SEGMENT_COLORS[0])
+                outline = C["text_primary"] if seg.get("id") == selected_id else C["border"]
                 width = 2 if seg.get("id") == selected_id else 1
                 self.canvas.create_rectangle(
                     sx, y0, ex, y1, fill=color, outline=outline, width=width,
                     tags=f"seg_{seg['id']}",
                 )
-                mx, my = (sx + ex) // 2, (y0 + y1) // 2
-                self.canvas.create_text(
-                    mx, my, text=seg["name"], fill="white", font=("", 8),
-                    tags=f"seg_{seg['id']}",
-                )
+                if ex - sx > 30:
+                    mx, my = (sx + ex) // 2, (y0 + y1) // 2
+                    self.canvas.create_text(
+                        mx, my, text=seg["name"], fill="white", font=("Segoe UI", 8),
+                        tags=f"seg_{seg['id']}",
+                    )
 
         self.draw_playhead(current_sec)
 
@@ -90,7 +91,7 @@ class TimelineRenderer:
         frac = current_sec / self.duration_sec if self.duration_sec > 0 else 0
         x = int(frac * cw)
         self.canvas.create_line(
-            x, 0, x, self.TIMELINE_H, fill="red", width=2, tags="playhead",
+            x, 0, x, self.TIMELINE_H, fill=C["playhead"], width=2, tags="playhead",
         )
 
     def x_to_sec(self, x):

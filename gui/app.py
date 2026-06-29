@@ -7,6 +7,7 @@ from core.video_merger import VideoMerger
 from gui.tab_gen_audio import GenAudioTab
 from gui.tab_merge_audio import MergeAudioTab
 from gui.tab_voice_samples import VoiceSamplesTab
+from gui.style import apply_theme
 
 
 class MainApp:
@@ -15,6 +16,9 @@ class MainApp:
         self.root.title("Công cụ tạo audio và ghép video")
         self.root.geometry("820x680")
         self.root.minsize(600, 500)
+        self.root.configure(bg="#0F1117")
+
+        apply_theme(self.root)
 
         self.root.update_idletasks()
         w = self.root.winfo_width()
@@ -30,7 +34,7 @@ class MainApp:
         self.video_merger = VideoMerger()
 
         notebook = ttk.Notebook(self.root)
-        notebook.pack(fill="both", expand=True, padx=5, pady=5)
+        notebook.pack(fill="both", expand=True, padx=8, pady=8)
 
         self.tab1 = GenAudioTab(notebook, self.audio_gen, self.player)
         self.tab2 = MergeAudioTab(notebook, self.video_merger, self.player)
