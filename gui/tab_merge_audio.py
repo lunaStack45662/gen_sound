@@ -5,7 +5,7 @@ from tkinter import filedialog, messagebox, ttk
 import cv2
 from PIL import Image, ImageTk
 
-from gui.video_player_window import VideoPlayerWindow
+from gui.video_player import VideoPlayerWindow
 
 
 class MergeAudioTab(ttk.Frame):

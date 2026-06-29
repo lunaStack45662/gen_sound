@@ -17,7 +17,13 @@ PythonProject/
 │   ├── app.py                     ← MainApp: Tk root + Notebook 3 tabs
 │   ├── tab_gen_audio.py           ← Tab 1: nhập text + chọn giọng + tốc độ + clone → gen .mp3
 │   ├── tab_merge_audio.py         ← Tab 2: chọn video + audio + start/end → ghép
-│   ├── video_player_window.py     ← Cửa sổ preview popup: 640x360, play/pause, seek slider  
+│   ├── video_player/              ← Package preview popup (tách module)
+│   │   ├── __init__.py             ← Export VideoPlayerWindow
+│   │   ├── window.py               ← UI orchestration (layout + events)
+│   │   ├── player.py               ← VideoPlayer: OpenCV capture, play/pause/seek
+│   │   ├── segments.py             ← SegmentManager: add/remove/edit/drag + preview playback
+│   │   └── timeline.py             ← TimelineRenderer: thumbnails, playhead, segment bars
+│   ├── video_player_window.py     ← Backward-compat re-export (có thể xoá sau)
 │   └── tab_voice_samples.py       ← Tab 3: danh sách giọng mẫu + phát thử 3 tốc độ
 ├── output/
 │   ├── audio/                     ← File .mp3 đã gen (Tab 1)
