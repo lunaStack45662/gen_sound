@@ -7,6 +7,7 @@ from core.video_merger import VideoMerger
 from gui.tab_gen_audio import GenAudioTab
 from gui.tab_merge_audio import MergeAudioTab
 from gui.tab_voice_samples import VoiceSamplesTab
+from gui.icons import Icons
 from gui.style import apply_theme
 
 
@@ -39,9 +40,12 @@ class MainApp:
         self.tab1 = GenAudioTab(notebook, self.audio_gen, self.player)
         self.tab2 = MergeAudioTab(notebook, self.video_merger, self.player)
         self.tab3 = VoiceSamplesTab(notebook, self.audio_gen, self.player)
-        notebook.add(self.tab1, text="  Tạo âm thanh  ")
-        notebook.add(self.tab2, text="  Ghép vào video  ")
-        notebook.add(self.tab3, text="  Nghe giọng mẫu  ")
+        notebook.add(self.tab1, text="  Tạo âm thanh  ",
+                     image=Icons.get("mic", 18), compound="left")
+        notebook.add(self.tab2, text="  Ghép vào video  ",
+                     image=Icons.get("videocam", 18), compound="left")
+        notebook.add(self.tab3, text="  Nghe giọng mẫu  ",
+                     image=Icons.get("music_note", 18), compound="left")
 
     def run(self):
         self.root.protocol("WM_DELETE_WINDOW", self._on_quit)

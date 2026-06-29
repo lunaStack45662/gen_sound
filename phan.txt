@@ -1,11 +1,14 @@
-.\run.bat
-D:\codePython\PythonProject\.venv\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
-  from pkg_resources import resource_stream, resource_exists
-pygame 2.6.1 (SDL 2.28.4, Python 3.12.10)
-Hello from the pygame community. https://www.pygame.org/contribute.html
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-[transformers] You are using a model of type `vieneu_v3_turbo` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
-Loading weights: 100%|████████████████████████████████████████████████████████████████████████████████████████████████| 374/374 [00:00<00:00, 11206.94it/s]
-D:\codePython\PythonProject\.venv\Lib\site-packages\moviepy\video\io\ffmpeg_reader.py:190: UserWarning: In file D:/animation_production_management/programming-simulation-remotion/out/video-34.mp4, 6220800 bytes wanted but 0 bytes read at frame index 1800 (out of a total 1801 frames), at time 60.00/60.05 sec. Using the last valid frame instead.
-  warnings.warn(
+  File "C:\Users\thangth\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1968, in __call__
+    return self.func(*args)
+           ^^^^^^^^^^^^^^^^
+  File "D:\codePython\PythonProject\gui\tab_merge_audio.py", line 108, in _open_player
+    VideoPlayerWindow(
+  File "D:\codePython\PythonProject\gui\video_player_window.py", line 75, in __init__
+    self.show_frame(0)
+  File "D:\codePython\PythonProject\gui\video_player_window.py", line 255, in show_frame
+    self._draw_playhead()
+  File "D:\codePython\PythonProject\gui\video_player_window.py", line 231, in _draw_playhead
+    cw = max(self._tl_w, 10)
+             ^^^^^^^^^^
+AttributeError: 'VideoPlayerWindow' object has no attribute '_tl_w'
 Press any key to continue . . . 

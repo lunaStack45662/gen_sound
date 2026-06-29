@@ -5,6 +5,8 @@ from tkinter import filedialog, messagebox, ttk
 import cv2
 from PIL import Image, ImageTk
 
+from gui.theme import COLORS as C
+from gui.theme import round_rect
 from gui.video_player import VideoPlayerWindow
 from gui.icons import Icons
 from gui.tooltip import add_tooltip
@@ -41,12 +43,16 @@ class MergeAudioTab(ttk.Frame):
         cf.pack(fill="x", pady=(6, 0))
         self.video_canvas = tk.Canvas(
             cf, width=320, height=180, bg="black",
-            highlightthickness=1, highlightbackground="#2A2D3E",
+            highlightthickness=0,
         )
         self.video_canvas.pack(side="left")
+        round_rect(self.video_canvas, 1, 1, 319, 179, r=10,
+                   fill=C["bg_secondary"], outline=C["border"], width=1)
+        self._placeholder_rect = round_rect(self.video_canvas, 96, 70, 224, 110,
+                                             r=6, fill=C["bg_hover"])
         self.video_canvas.create_text(
-            160, 90, text="Chưa có video", fill="#4A4D61", font=("Segoe UI", 10),
-            tags="placeholder",
+            160, 90, text="Chưa có video", fill=C["text_muted"],
+            font=("Segoe UI", 10), tags="placeholder",
         )
 
         ctrl = ttk.Frame(cf)
@@ -99,10 +105,11 @@ class MergeAudioTab(ttk.Frame):
         nw, nh = int(w * scale), int(h * scale)
         frame = cv2.resize(frame, (nw, nh), interpolation=cv2.INTER_AREA)
         self._photo = ImageTk.PhotoImage(Image.fromarray(frame))
-        self.video_canvas.delete("all")
+        self.video_canvas.delete("frame_content")
         x = (320 - nw) // 2
         y = (180 - nh) // 2
-        self.video_canvas.create_image(x, y, anchor="nw", image=self._photo)
+        self.video_canvas.create_image(x, y, anchor="nw", image=self._photo,
+                                        tags="frame_content")
         total_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT))
         fps = self._cap.get(cv2.CAP_PROP_FPS) or 30
         duration = total_frames / fps

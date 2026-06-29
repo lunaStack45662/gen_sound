@@ -3,7 +3,7 @@ from PIL import Image, ImageTk
 
 import cv2
 
-from gui.theme import COLORS as C, SEGMENT_COLORS
+from gui.theme import COLORS as C, SEGMENT_COLORS, round_rect
 
 
 class TimelineRenderer:
@@ -67,15 +67,14 @@ class TimelineRenderer:
             for seg in segments:
                 sx = int((seg["start"] / self.duration_sec) * cw)
                 ex = int((seg["end"] / self.duration_sec) * cw)
-                if ex - sx < 6:
-                    ex = sx + 6
+                if ex - sx < 10:
+                    ex = sx + 10
                 color = seg.get("color", SEGMENT_COLORS[0])
-                outline = C["text_primary"] if seg.get("id") == selected_id else C["border"]
-                width = 2 if seg.get("id") == selected_id else 1
-                self.canvas.create_rectangle(
-                    sx, y0, ex, y1, fill=color, outline=outline, width=width,
-                    tags=f"seg_{seg['id']}",
-                )
+                outline = C["text_primary"] if seg.get("id") == selected_id else color
+                r = min(5, (ex - sx) // 2, (y1 - y0) // 2)
+                round_rect(self.canvas, sx, y0, ex, y1, r=r,
+                           fill=color, outline=outline, width=2,
+                           tags=f"seg_{seg['id']}")
                 if ex - sx > 30:
                     mx, my = (sx + ex) // 2, (y0 + y1) // 2
                     self.canvas.create_text(

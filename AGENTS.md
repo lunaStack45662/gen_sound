@@ -7,6 +7,7 @@
 
 ```
 PythonProject/
+├── assets/icons/                  ← 17 Material Design icons (PNG 48x48, white)
 ├── core/                          ← Business logic layer
 │   ├── __init__.py
 │   ├── audio_generator.py         ← Vieneu TTS: gen audio, adjust speed, voice clone
@@ -14,17 +15,21 @@ PythonProject/
 │   └── video_merger.py            ← ffmpeg: ghép audio vào video tại timestamp
 ├── gui/                           ← UI layer (tkinter)
 │   ├── __init__.py
-│   ├── app.py                     ← MainApp: Tk root + Notebook 3 tabs
+│   ├── app.py                     ← MainApp: Tk root + Notebook 3 tabs, gọi apply_theme()
 │   ├── tab_gen_audio.py           ← Tab 1: nhập text + chọn giọng + tốc độ + clone → gen .mp3
-│   ├── tab_merge_audio.py         ← Tab 2: chọn video + audio + start/end → ghép
-│   ├── video_player/              ← Package preview popup (tách module)
+│   ├── tab_merge_audio.py         ← Tab 2: chọn video → preview popup → ghép
+│   ├── video_player/              ← Package preview popup
 │   │   ├── __init__.py             ← Export VideoPlayerWindow
 │   │   ├── window.py               ← UI orchestration (layout + events)
 │   │   ├── player.py               ← VideoPlayer: OpenCV capture, play/pause/seek
 │   │   ├── segments.py             ← SegmentManager: add/remove/edit/drag + preview playback
 │   │   └── timeline.py             ← TimelineRenderer: thumbnails, playhead, segment bars
-│   ├── video_player_window.py     ← Backward-compat re-export (có thể xoá sau)
-│   └── tab_voice_samples.py       ← Tab 3: danh sách giọng mẫu + phát thử 3 tốc độ
+│   ├── video_player_window.py     ← Backward-compat re-export
+│   ├── tab_voice_samples.py       ← Tab 3: danh sách giọng mẫu + phát thử 3 tốc độ
+│   ├── theme.py                   ← Design tokens: COLORS (dark), FONTS, SPACING, SEGMENT_COLORS
+│   ├── style.py                   ← apply_theme(): ttk.Style(clam) dark palette
+│   ├── icons.py                   ← Icons class load Material Design PNG từ assets/icons/
+│   └── tooltip.py                 ← add_tooltip(widget, text): tooltip sau 400ms hover
 ├── output/
 │   ├── audio/                     ← File .mp3 đã gen (Tab 1)
 │   ├── video/                     ← Video đã ghép (Tab 2)
@@ -52,28 +57,53 @@ PythonProject/
 - `VideoMerger.__init__()` → `imageio_ffmpeg.get_ffmpeg_exe()`
 - `get_video_info(path)` → duration, has_audio, width, height
 - `merge(video_path, audio_path, start_sec, end_sec, output_path, on_done, on_error)` → Threaded
+- `chain_merge(video_path, segments, output_path, on_done, on_error)` → Multi-segment merge
+- `build_filter(video_path, segments, vid_dur)` → Tạo filter_complex string
 - Dùng filter_complex: volume=0 + adelay + amix
 
 ### gui/app.py
-- 820x680, center màn hình
+- 820x680, center màn hình, dark theme (#0F1117)
 - 3 tabs: "Tạo âm thanh" | "Ghép vào video" | "Nghe giọng mẫu"
 - Singleton: AudioPlayer, AudioGenerator, VideoMerger
+- Gọi `apply_theme()` từ gui/style.py
+
+### gui/theme.py
+- COLORS: bg_primary (#0F1117), bg_secondary, accent (#7C6FF7), text_primary, ...
+- FONTS: heading, body, small, mono, tab
+- SPACING: xs-xl (4→32px)
+- SEGMENT_COLORS: 8 màu pastel cho segment bars
+
+### gui/style.py
+- `apply_theme(root)`: ttk.Style theme_use("clam")
+- Cấu hình: Notebook, Frame (Card), Label (Heading/Secondary), Button (Secondary), Entry, Combobox, Scrollbar, Separator
+- dark palette cho tất cả widget
+
+### gui/icons.py
+- `Icons.get(name, size=24)` → cached PhotoImage
+- Load từ `assets/icons/{name}.png`, resize bằng Pillow.LANCZOS
+- Dùng `image=` parameter cho ttk.Button thay `text=`
+
+### gui/tooltip.py
+- `add_tooltip(widget, text, delay=400)` → ToolTip instance
+- Tạo Toplevel override-redirect khi hover Enter, huỷ khi Leave
+- Style: bg #252836, fg #F1F1F3, font Segoe UI 9
 
 ### gui/tab_gen_audio.py
 - Combobox chọn giọng (10 preset) + Combobox tốc độ (0.8x / 1.0x / 1.25x / 1.5x)
 - Voice Cloning: chọn file WAV/MP3 3-5s → `ref_audio` → infer
 - ScrolledText nhập text + nút "Tạo âm thanh" (threaded)
-- Danh sách file đã gen (Listbox) + Phát thử / Dừng / Xóa / Mở thư mục
+- Danh sách file đã gen (Listbox dark) + Phát thử / Dừng / Xóa / Mở thư mục (icon button + tooltip)
 - Tự động điều chỉnh tốc độ sau gen nếu chọn speed ≠ 1.0
 
 ### gui/tab_merge_audio.py
 - File dialog chọn video
-- Canvas thumbnail 320x180 khi chọn video
-- "▶ Xem video" → mở VideoPlayerWindow popup (xem + chỉnh sửa + ghép)
-- Mọi thao tác audio đều trong popup
+- Canvas thumbnail 320x180 (theme border + placeholder text)
+- "Xem video" button icon + tooltip → mở VideoPlayerWindow popup
 
-### gui/video_player_window.py
+### gui/video_player/window.py
 - Toplevel riêng, kích thước động theo tỷ lệ video (mặc định 800x480)
+- Canvas video dark, timeline dark (#1A1D27)
+- Icon button: play/pause/stop/add/delete/merge + tooltip trên mỗi nút
 - Resize được (bind Configure → redraw canvas)
 - Play / Pause / Stop
 - Click/drag seek trực tiếp trên canvas video (hiện overlay thời gian)
@@ -84,13 +114,14 @@ PythonProject/
 - Phím Delete: xoá segment đang chọn
 - Audio segment playback đồng bộ với video (dùng pygame.mixer.Sound)
 - Combobox tốc độ: 0.25x → 2.0x
-- "Ghép ▶" nút merge ngay trong popup (xử lý tuần tự nhiều segment)
+- Merge button icon + tooltip
 - Phím tắt: ← → (1 frame), ↑ ↓ (1s), Space (play/pause), J/K/L
 - Tự động phát khi mở (resume sau seek)
+- Edit segment dialog (Toplevel dark, entry + button Lưu)
 
 ### gui/tab_voice_samples.py
 - Gen 11 file mẫu (10 giọng + Trúc Ly với `[cười]`) khi lần đầu chạy
-- Mỗi giọng 3 nút: Chậm (0.8x) / Thường (1.0x) / Nhanh (1.25x)
+- Mỗi giọng 3 nút icon play → stop: Chậm (0.8x) / Thường (1.0x) / Nhanh (1.25x) + tooltip
 - Speed variant cache: `output/samples/.cache/*.mp3`
 - `[cười]` emotion cue cho Trúc Ly → giọng sáng hơn
 
@@ -100,6 +131,7 @@ PythonProject/
 - imageio-ffmpeg (bundled ffmpeg)
 - pygame==2.6.1 (audio playback)
 - opencv-python-headless (video frame reading)
+- Pillow (icon resize, image handling)
 - transformers, onnxruntime, tokenizers
 
 ## GPU Requirements
@@ -125,6 +157,8 @@ PythonProject/
 - Khi merge: video có audio cũ → tự động silence segment đó + mix audio mới
 - Khi merge: video không audio → tự động thêm silent padding
 - PYTHONIOENCODING=utf-8 bắt buộc trên Windows console (GUI không ảnh hưởng)
+- Icons: Material Design white 48x48, cache trong Icons._cache dict
+- Tooltip: Toplevel override-redirect, delay 400ms, font Segoe UI 9
 
 ## Merge Bugs Fixed (2026-06-29)
 1. **amix halving audio**: `amix` default weights `1 1` halves output → thêm `,volume=2` post-mix
@@ -145,3 +179,7 @@ PythonProject/
   - real video-34.mp4 + WAV nữ at 5.5s
   - edit validation rules
   - timeline pixel precision
+
+## Commit History
+- `49a1556` — refactor: split video_player_window.py into package, chain_merge in core
+- `4b82efc` — feat: theme dark, icons material design, tooltip cho toàn bộ button

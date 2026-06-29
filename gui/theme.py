@@ -39,3 +39,47 @@ SEGMENT_COLORS = [
     "#7C6FF7", "#4ECDC4", "#45B7D1", "#96CEB4",
     "#FFEAA7", "#DDA0DD", "#98D8C8", "#FF6B6B",
 ]
+
+
+def round_rect(canvas, x1, y1, x2, y2, r=8, **kwargs):
+    """Vẽ hình chữ nhật bo góc trên canvas. Trả về list tags."""
+    tags = kwargs.pop("tags", None)
+    parts = []
+    # 4 góc bo
+    parts.append(canvas.create_arc(x1, y1, x1 + r * 2, y1 + r * 2,
+                                    start=90, extent=90, fill=kwargs.get("fill"), outline="", tags=tags))
+    parts.append(canvas.create_arc(x2 - r * 2, y1, x2, y1 + r * 2,
+                                    start=0, extent=90, fill=kwargs.get("fill"), outline="", tags=tags))
+    parts.append(canvas.create_arc(x1, y2 - r * 2, x1 + r * 2, y2,
+                                    start=180, extent=90, fill=kwargs.get("fill"), outline="", tags=tags))
+    parts.append(canvas.create_arc(x2 - r * 2, y2 - r * 2, x2, y2,
+                                    start=270, extent=90, fill=kwargs.get("fill"), outline="", tags=tags))
+    # 4 cạnh
+    parts.append(canvas.create_rectangle(x1 + r, y1, x2 - r, y1 + r,
+                                          fill=kwargs.get("fill"), outline="", tags=tags))
+    parts.append(canvas.create_rectangle(x1 + r, y2 - r, x2 - r, y2,
+                                          fill=kwargs.get("fill"), outline="", tags=tags))
+    parts.append(canvas.create_rectangle(x1, y1 + r, x1 + r, y2 - r,
+                                          fill=kwargs.get("fill"), outline="", tags=tags))
+    parts.append(canvas.create_rectangle(x2 - r, y1 + r, x2, y2 - r,
+                                          fill=kwargs.get("fill"), outline="", tags=tags))
+    # outline
+    if "outline" in kwargs and kwargs["outline"]:
+        w = kwargs.get("width", 1)
+        parts.append(canvas.create_arc(x1, y1, x1 + r * 2, y1 + r * 2,
+                                        start=90, extent=90, fill="", outline=kwargs["outline"], width=w, tags=tags))
+        parts.append(canvas.create_arc(x2 - r * 2, y1, x2, y1 + r * 2,
+                                        start=0, extent=90, fill="", outline=kwargs["outline"], width=w, tags=tags))
+        parts.append(canvas.create_arc(x1, y2 - r * 2, x1 + r * 2, y2,
+                                        start=180, extent=90, fill="", outline=kwargs["outline"], width=w, tags=tags))
+        parts.append(canvas.create_arc(x2 - r * 2, y2 - r * 2, x2, y2,
+                                        start=270, extent=90, fill="", outline=kwargs["outline"], width=w, tags=tags))
+        parts.append(canvas.create_line(x1 + r, y1, x2 - r, y1,
+                                         fill=kwargs["outline"], width=w, tags=tags))
+        parts.append(canvas.create_line(x1 + r, y2, x2 - r, y2,
+                                         fill=kwargs["outline"], width=w, tags=tags))
+        parts.append(canvas.create_line(x1, y1 + r, x1, y2 - r,
+                                         fill=kwargs["outline"], width=w, tags=tags))
+        parts.append(canvas.create_line(x2, y1 + r, x2, y2 - r,
+                                         fill=kwargs["outline"], width=w, tags=tags))
+    return parts
