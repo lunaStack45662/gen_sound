@@ -196,4 +196,4 @@ PythonProject/
 - `4b82efc` — feat: theme dark, icons material design, tooltip cho toàn bộ button
 - `396cf00` — feat: bo góc segment + video canvas, tab icon
 - `edc41a7` — style: card containers + SPACING constants như Tailwind
-- *(chưa commit)* — migrate to CustomTkinter (full GUI rewrite)
+- `fe1f46d` — migrate to CustomTkinter (full GUI rewrite)

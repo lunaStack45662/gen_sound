@@ -37,6 +37,7 @@ class VoiceSamplesTab(ctk.CTkFrame):
         self._playing_idx = None
         self._build_ui()
         self._check_samples()
+        self.pack(fill="both", expand=True)
 
     def _build_ui(self):
         self._img_play = Icons.get("play_arrow", 16)

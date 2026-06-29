@@ -21,6 +21,7 @@ class GenAudioTab(ctk.CTkFrame):
         self._selected_path = None
         self._build_ui()
         self._refresh_file_list()
+        self.pack(fill="both", expand=True)
 
     def _build_ui(self):
         self._img_play = Icons.get("play_arrow", 20)

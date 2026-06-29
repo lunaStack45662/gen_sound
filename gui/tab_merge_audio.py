@@ -19,6 +19,7 @@ class MergeAudioTab(ctk.CTkFrame):
         self.video_path = tk.StringVar()
         self._cap = None
         self._build_ui()
+        self.pack(fill="both", expand=True)
 
     def _build_ui(self):
         self._img_video = Icons.get("videocam", 24)
