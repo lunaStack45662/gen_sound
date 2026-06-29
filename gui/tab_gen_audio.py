@@ -111,7 +111,15 @@ class GenAudioTab(ttk.Frame):
                 voice_id = vid
                 break
 
-        idx = len(list(self.output_dir.glob("*.mp3"))) + 1
+        existing = sorted(self.output_dir.glob("audio_*.mp3"))
+        idx = 1
+        for f in existing:
+            try:
+                n = int(f.stem.split("_")[1])
+                if n >= idx:
+                    idx = n + 1
+            except (IndexError, ValueError):
+                continue
         output_path = self.output_dir / f"audio_{idx:03d}.mp3"
 
         self.gen_btn.config(state="disabled")

@@ -1,7 +1,11 @@
-tôi thấy việc để AI thực hiện gen ra 1 file âm thanh dựa vào file .srt là không ổn , vì model gen ra âm thanh cũng không ổn 
-, lên tôi muốn thực hiện dùng GUI gen ra từng đoạn , sau đó mới ghép vào video ,
-ghép đoạn âm thanh này vào từ giây thứ bao nhiêu của video ,
-cụ thể tôi muốn có 2 bước , bước 1 nhập text để AI gen ra file âm thanh .mp3 ,
-bước 2 ok sẽ ghép vào video từ giây thứ bao nhiêu đến bao nhiêu , 
-và dùng python và tkiner và from vieneu import Vieneu  và fffglem , và máy có GPU 6gb 3050 rtx , 
-lên phan cho tôi để AI thực hiện
+.\run.bat
+D:\codePython\PythonProject\.venv\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.12.10)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[transformers] You are using a model of type `vieneu_v3_turbo` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+Loading weights: 100%|████████████████████████████████████████████████████████████████████████████████████████████████| 374/374 [00:00<00:00, 11206.94it/s]
+D:\codePython\PythonProject\.venv\Lib\site-packages\moviepy\video\io\ffmpeg_reader.py:190: UserWarning: In file D:/animation_production_management/programming-simulation-remotion/out/video-34.mp4, 6220800 bytes wanted but 0 bytes read at frame index 1800 (out of a total 1801 frames), at time 60.00/60.05 sec. Using the last valid frame instead.
+  warnings.warn(
+Press any key to continue . . . 

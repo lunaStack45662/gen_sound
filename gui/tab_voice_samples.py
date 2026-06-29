@@ -1,8 +1,7 @@
-import os
 import subprocess
 import tkinter as tk
 from pathlib import Path
-from tkinter import messagebox, ttk
+from tkinter import ttk
 
 import imageio_ffmpeg
 
@@ -99,36 +98,36 @@ class VoiceSamplesTab(ttk.Frame):
         self.progress.pack(fill="x", padx=10, pady=(0, 10))
         self.progress["maximum"] = total
         self.progress["value"] = 0
+        self._gen_queue = list(self.items)
+        self._gen_next()
 
-        def on_voice_done(path):
+    def _gen_next(self):
+        if not self._gen_queue:
+            self.progress.pack_forget()
+            self.progress_label.pack_forget()
+            self._check_samples()
+            return
+        label, vid, text, slug = self._gen_queue.pop(0)
+        path = self.sample_dir / f"{slug}.mp3"
+
+        def on_done(p):
             self.progress["value"] += 1
             self.progress_label.config(
-                text=f"Đã gen {int(self.progress['value'])}/{total}"
+                text=f"Đã gen {int(self.progress['value'])}/{len(self.items)}"
             )
-            if self.progress["value"] >= total:
-                self.progress.pack_forget()
-                self.progress_label.pack_forget()
-                self._check_samples()
+            self._gen_next()
 
-        def on_voice_error(err):
+        def on_error(err):
             self.progress["value"] += 1
             self.progress_label.config(
-                text=f"Lỗi: {err[:50]}...  ({int(self.progress['value'])}/{total})"
+                text=f"Lỗi: {err[:50]}...  ({int(self.progress['value'])}/{len(self.items)})"
             )
-            if self.progress["value"] >= total:
-                self.progress.pack_forget()
-                self.progress_label.pack_forget()
-                self._check_samples()
+            self._gen_next()
 
-        for label, vid, text, slug in self.items:
-            path = self.sample_dir / f"{slug}.mp3"
-            self.audio_gen.generate(
-                text=text,
-                voice_name=vid,
-                output_path=path,
-                on_done=on_voice_done,
-                on_error=on_voice_error,
-            )
+        self.audio_gen.generate(
+            text=text, voice_name=vid, output_path=path,
+            on_done=on_done, on_error=on_error,
+        )
 
     def _show_list(self):
         for w in self.list_frame.winfo_children():

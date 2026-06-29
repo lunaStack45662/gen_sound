@@ -7,7 +7,8 @@ from vieneu import Vieneu
 
 
 class AudioGenerator:
-    def __init__(self):
+    def __init__(self, root=None):
+        self._root = root
         self._tts = Vieneu()
         self._voices = []
         self._init_voices()
@@ -49,10 +50,14 @@ class AudioGenerator:
             mp3_path = output_path.with_suffix(".mp3")
             self._wav_to_mp3(wav_path, mp3_path)
             wav_path.unlink(missing_ok=True)
-            if on_done:
+            if on_done and self._root:
+                self._root.after(0, on_done, str(mp3_path))
+            elif on_done:
                 on_done(str(mp3_path))
         except Exception as e:
-            if on_error:
+            if on_error and self._root:
+                self._root.after(0, on_error, str(e))
+            elif on_error:
                 on_error(str(e))
 
     def _wav_to_mp3(self, wav_path, mp3_path):

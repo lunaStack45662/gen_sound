@@ -61,29 +61,26 @@ PythonProject/
 - Tự động điều chỉnh tốc độ sau gen nếu chọn speed ≠ 1.0
 
 ### gui/tab_merge_audio.py
-- File dialog chọn video + audio
+- File dialog chọn video
 - Canvas thumbnail 320x180 khi chọn video
-- "▶ Xem video" → mở VideoPlayerWindow popup (play/pause/seek)
-- Entry "Từ giây" / "Đến giây"
-- "Xem thông tin video" → duration, resolution, has_audio
-- "Phát thử" audio preview
-- "Ghép vào video" → Threaded ffmpeg + progress
-- Sau thành công: hỏi mở file
+- "▶ Xem video" → mở VideoPlayerWindow popup (xem + chỉnh sửa + ghép)
+- Mọi thao tác audio đều trong popup
 
 ### gui/video_player_window.py
 - Toplevel riêng, kích thước động theo tỷ lệ video (mặc định 800x480)
 - Resize được (bind Configure → redraw canvas)
 - Play / Pause / Stop
-- Seek slider độ chính xác 0.1s (giá trị float seconds)
-- Hiển thị thời gian (phút:giây.1/10)
-- Combobox tốc độ: 0.25x → 2.0x
-- Tự động phát khi mở
-- Giao diện tối theme (clam theme, #1e1e1e bg)
 - Click/drag seek trực tiếp trên canvas video (hiện overlay thời gian)
-- Timeline thumbnail strip dưới canvas (30 ảnh nhỏ) + playhead
-- Click/drag seek trên timeline strip
-- Nút nudge ◀◀ ▶▶ (tua 0.5s)
+- Timeline thumbnail strip + audio track + playhead
+- "+ Thêm audio" mở file dialog, tự động detect duration
+- Kéo segment audio trên timeline để di chuyển
+- Double-click: sửa start/end, Right-click: context menu xoá/sửa
+- Phím Delete: xoá segment đang chọn
+- Audio segment playback đồng bộ với video (dùng pygame.mixer.Sound)
+- Combobox tốc độ: 0.25x → 2.0x
+- "Ghép ▶" nút merge ngay trong popup (xử lý tuần tự nhiều segment)
 - Phím tắt: ← → (1 frame), ↑ ↓ (1s), Space (play/pause), J/K/L
+- Tự động phát khi mở (resume sau seek)
 
 ### gui/tab_voice_samples.py
 - Gen 11 file mẫu (10 giọng + Trúc Ly với `[cười]`) khi lần đầu chạy
@@ -122,3 +119,23 @@ PythonProject/
 - Khi merge: video có audio cũ → tự động silence segment đó + mix audio mới
 - Khi merge: video không audio → tự động thêm silent padding
 - PYTHONIOENCODING=utf-8 bắt buộc trên Windows console (GUI không ảnh hưởng)
+
+## Merge Bugs Fixed (2026-06-29)
+1. **amix halving audio**: `amix` default weights `1 1` halves output → thêm `,volume=2` post-mix
+2. **atrim missing**: WAV played full duration, not trimmed to `insert_dur` → thêm `atrim=end={insert_dur}`
+3. **has_audio=False branch missing atrim**: same fix as above
+4. **vid_dur=0 silent failure**: nếu ffmpeg probe fail → `vid_dur=0` → output 0 giây → guard `if vid_dur <= 0: raise`
+5. **Segment sort in chain merge**: segments processed in insertion order → corrupt overlap → `sort(key=lambda s: s["start"])`
+6. **resume() không reset segments**: sau seek/edit → `_seg_triggered` còn ID cũ → segment không play → thêm `_reset_segments()` trong `resume()` và `_edit_segment.save()`
+
+## Tests
+- `tests/test_merge_ffmpeg.py`: standalone ffmpeg merge test (3 test cases, has_audio/no_audio/silent stream)
+- `tests/test_all_cases.py`: comprehensive 65 test cases covering:
+  - basic has_audio/no_audio
+  - edge positions (0, end, middle)
+  - WAV shorter/longer than insert_dur
+  - chain merge 2-3 segments, overlap
+  - real user WAV files (mau_giong_nu_healing.wav, mau_giong_nam_healing.wav)
+  - real video-34.mp4 + WAV nữ at 5.5s
+  - edit validation rules
+  - timeline pixel precision

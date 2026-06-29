@@ -8,7 +8,7 @@ import pygame.mixer
 class AudioPlayer:
     def __init__(self):
         try:
-            pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
+            pygame.mixer.init(frequency=48000, size=-16, channels=2, buffer=1024)
             self._available = True
         except Exception:
             self._available = False

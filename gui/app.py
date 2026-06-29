@@ -26,7 +26,7 @@ class MainApp:
         self.root.geometry(f"{w}x{h}+{x}+{y}")
 
         self.player = AudioPlayer()
-        self.audio_gen = AudioGenerator()
+        self.audio_gen = AudioGenerator(root=self.root)
         self.video_merger = VideoMerger()
 
         notebook = ttk.Notebook(self.root)
@@ -40,4 +40,17 @@ class MainApp:
         notebook.add(self.tab3, text="  Nghe giọng mẫu  ")
 
     def run(self):
+        self.root.protocol("WM_DELETE_WINDOW", self._on_quit)
         self.root.mainloop()
+
+    def _on_quit(self):
+        try:
+            self.player.stop()
+        except Exception:
+            pass
+        try:
+            import pygame
+            pygame.mixer.quit()
+        except Exception:
+            pass
+        self.root.destroy()
