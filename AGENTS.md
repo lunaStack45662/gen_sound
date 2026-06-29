@@ -78,6 +78,12 @@ PythonProject/
 - Hiển thị thời gian (phút:giây.1/10)
 - Combobox tốc độ: 0.25x → 2.0x
 - Tự động phát khi mở
+- Giao diện tối theme (clam theme, #1e1e1e bg)
+- Click/drag seek trực tiếp trên canvas video (hiện overlay thời gian)
+- Timeline thumbnail strip dưới canvas (30 ảnh nhỏ) + playhead
+- Click/drag seek trên timeline strip
+- Nút nudge ◀◀ ▶▶ (tua 0.5s)
+- Phím tắt: ← → (1 frame), ↑ ↓ (1s), Space (play/pause), J/K/L
 
 ### gui/tab_voice_samples.py
 - Gen 11 file mẫu (10 giọng + Trúc Ly với `[cười]`) khi lần đầu chạy

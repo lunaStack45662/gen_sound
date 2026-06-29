@@ -156,7 +156,10 @@ class MergeAudioTab(ttk.Frame):
         if not path or not Path(path).exists():
             messagebox.showwarning("Cảnh báo", "Chưa chọn video!")
             return
-        VideoPlayerWindow(self, path)
+        self.view_btn.config(state="disabled")
+        def on_player_close():
+            self.view_btn.config(state="normal")
+        VideoPlayerWindow(self, path, on_close=on_player_close)
 
     def _select_audio(self):
         path = filedialog.askopenfilename(
