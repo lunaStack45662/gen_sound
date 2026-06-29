@@ -1,0 +1,7 @@
+tôi thấy việc để AI thực hiện gen ra 1 file âm thanh dựa vào file .srt là không ổn , vì model gen ra âm thanh cũng không ổn 
+, lên tôi muốn thực hiện dùng GUI gen ra từng đoạn , sau đó mới ghép vào video ,
+ghép đoạn âm thanh này vào từ giây thứ bao nhiêu của video ,
+cụ thể tôi muốn có 2 bước , bước 1 nhập text để AI gen ra file âm thanh .mp3 ,
+bước 2 ok sẽ ghép vào video từ giây thứ bao nhiêu đến bao nhiêu , 
+và dùng python và tkiner và from vieneu import Vieneu  và fffglem , và máy có GPU 6gb 3050 rtx , 
+lên phan cho tôi để AI thực hiện

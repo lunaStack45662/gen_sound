@@ -16,6 +16,7 @@ input/**/*.wav
 input/**/*.mp3
 output/**/*.mp4
 output/**/*.wav
+output/**/*.mp3
 
 # Temp copy at root
 extended-horse-21s-fixed.mp4
