@@ -99,7 +99,7 @@ class GenAudioTab(ctk.CTkFrame):
         self.progress.pack(side="left", padx=(16, 0))
         self.progress.set(0)
 
-        # ── Card: file list ──
+        # ── Card: file list + action buttons (grid) ──
         ctk.CTkLabel(self, text="Các file đã tạo:").pack(anchor="w", padx=16)
         card3 = ctk.CTkFrame(self, fg_color="#1E2130", border_width=1,
                              border_color="#2A2D3E", corner_radius=8)
@@ -108,9 +108,13 @@ class GenAudioTab(ctk.CTkFrame):
         inner3 = ctk.CTkFrame(card3, fg_color="transparent")
         inner3.pack(fill="both", expand=True, padx=8, pady=8)
 
-        scrollbar = tk.Scrollbar(inner3, orient="vertical",
+        # ── File list (left) ──
+        list_container = ctk.CTkFrame(inner3, fg_color="transparent")
+        list_container.pack(side="left", fill="both", expand=True)
+
+        scrollbar = tk.Scrollbar(list_container, orient="vertical",
                                  bg="#1A1D27", troughcolor="#0F1117")
-        self.file_listbox = tk.Listbox(inner3, yscrollcommand=scrollbar.set,
+        self.file_listbox = tk.Listbox(list_container, yscrollcommand=scrollbar.set,
                                         bg="#1A1D27", fg="#F1F1F3",
                                         selectbackground="#3B82F6",
                                         selectforeground="#F1F1F3",
@@ -122,33 +126,38 @@ class GenAudioTab(ctk.CTkFrame):
         self.file_listbox.pack(side="left", fill="both", expand=True)
         self.file_listbox.bind("<Double-Button-1>", lambda e: self._play_selected())
 
-        # ── File action buttons ──
-        btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        btn_frame.pack(fill="x", padx=16, pady=(0, 16))
-        self.preview_btn = ctk.CTkButton(btn_frame, image=self._img_play, text="",
+        # ── Action buttons (vertical, right side) ──
+        btn_frame = ctk.CTkFrame(inner3, fg_color="transparent", width=48)
+        btn_frame.pack(side="right", fill="y", padx=(8, 2))
+        btn_frame.pack_propagate(False)
+        # center buttons vertically
+        btn_center = ctk.CTkFrame(btn_frame, fg_color="transparent")
+        btn_center.pack(expand=True)
+
+        self.preview_btn = ctk.CTkButton(btn_center, image=self._img_play, text="",
                                           command=self._play_selected,
-                                          width=36, height=36, corner_radius=6)
-        self.preview_btn.pack(side="left", padx=(0, 4))
-        add_tooltip(self.preview_btn, "Phát thử file đã chọn")
+                                          width=40, height=36, corner_radius=6)
+        self.preview_btn.pack(pady=(0, 6))
+        add_tooltip(self.preview_btn, "Phát thử")
 
-        preview_stop_btn = ctk.CTkButton(btn_frame, image=self._img_stop, text="",
+        preview_stop_btn = ctk.CTkButton(btn_center, image=self._img_stop, text="",
                                           command=self._stop_play,
-                                          width=36, height=36, corner_radius=6)
-        preview_stop_btn.pack(side="left", padx=(0, 4))
-        add_tooltip(preview_stop_btn, "Dừng phát thử")
+                                          width=40, height=36, corner_radius=6)
+        preview_stop_btn.pack(pady=(0, 6))
+        add_tooltip(preview_stop_btn, "Dừng")
 
-        preview_del_btn = ctk.CTkButton(btn_frame, image=self._img_delete, text="",
+        preview_del_btn = ctk.CTkButton(btn_center, image=self._img_delete, text="",
                                          command=self._delete_selected,
-                                         width=36, height=36, corner_radius=6,
+                                         width=40, height=36, corner_radius=6,
                                          fg_color="#EF4444", hover_color="#DC2626")
-        preview_del_btn.pack(side="left")
-        add_tooltip(preview_del_btn, "Xoá file MP3 đã chọn")
+        preview_del_btn.pack(pady=(0, 6))
+        add_tooltip(preview_del_btn, "Xoá")
 
-        preview_folder_btn = ctk.CTkButton(btn_frame, image=self._img_folder, text="",
+        preview_folder_btn = ctk.CTkButton(btn_center, image=self._img_folder, text="",
                                             command=self._open_output_dir,
-                                            width=36, height=36, corner_radius=6)
-        preview_folder_btn.pack(side="right")
-        add_tooltip(preview_folder_btn, "Mở thư mục chứa file MP3")
+                                            width=40, height=36, corner_radius=6)
+        preview_folder_btn.pack()
+        add_tooltip(preview_folder_btn, "Mở thư mục")
 
     def _select_ref_audio(self):
         path = filedialog.askopenfilename(
