@@ -243,6 +243,7 @@ class GenAudioTab(ctk.CTkFrame):
                       ref_audio=ref_audio, on_done=self._on_done, on_error=self._on_error)
 
     def _on_done(self, path):
+        path = Path(path)
         apply_speed = getattr(self, "_pending_speed", 1.0)
         if apply_speed != 1.0:
             try:
