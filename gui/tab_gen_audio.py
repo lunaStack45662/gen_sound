@@ -6,15 +6,16 @@ from tkinter import filedialog, messagebox
 import customtkinter as ctk
 
 from core.audio_generator import AudioGenerator
+from core.model_loader import ModelLoader
 from core.audio_player import AudioPlayer
 from gui.icons import Icons
 from gui.tooltip import add_tooltip
 
 
 class GenAudioTab(ctk.CTkFrame):
-    def __init__(self, parent, audio_gen: AudioGenerator, player: AudioPlayer):
+    def __init__(self, parent, model_loader: ModelLoader, player: AudioPlayer):
         super().__init__(parent, fg_color="transparent")
-        self.audio_gen = audio_gen
+        self.model_loader = model_loader
         self.player = player
         self.output_dir = Path("output/audio")
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -30,66 +31,39 @@ class GenAudioTab(ctk.CTkFrame):
         self._img_folder = Icons.get("folder_open", 20)
         self._img_add = Icons.get("add", 20)
 
-        # ── Card: giọng + tốc độ ──
-        card1 = ctk.CTkFrame(self, fg_color="#1E2130", border_width=1,
-                             border_color="#2A2D3E", corner_radius=8)
-        card1.pack(fill="x", padx=16, pady=(16, 4))
-        inner1 = ctk.CTkFrame(card1, fg_color="transparent")
-        inner1.pack(padx=16, pady=8)
-
-        ctk.CTkLabel(inner1, text="Giọng đọc", text_color="#8B8FA8").pack(side="left")
-        self.voice_var = tk.StringVar()
-        voice_names = [label for label, _ in self.audio_gen.voices]
-        self.voice_combo = ctk.CTkComboBox(
-            inner1, variable=self.voice_var, values=voice_names,
-            state="readonly", width=320,
+        # ── Engine selector ──
+        engine_row = ctk.CTkFrame(self, fg_color="transparent")
+        engine_row.pack(fill="x", padx=16, pady=(8, 2))
+        ctk.CTkLabel(engine_row, text="Model TTS:", text_color="#8B8FA8").pack(side="left")
+        self.engine_var = tk.StringVar(value="Vieneu")
+        self.engine_combo = ctk.CTkComboBox(
+            engine_row, variable=self.engine_var, values=["Vieneu", "OmniVoice"],
+            state="readonly", width=160, command=self._on_engine_change,
         )
-        if voice_names:
-            self.voice_combo.set(voice_names[0])
-        self.voice_combo.pack(side="left", padx=(8, 0))
+        self.engine_combo.pack(side="left", padx=(8, 0))
+        add_tooltip(self.engine_combo, "Chuyển đổi giữa Vieneu và OmniVoice")
 
-        ctk.CTkLabel(inner1, text="Tốc độ", text_color="#8B8FA8").pack(
-            side="left", padx=(16, 0))
-        self.speed_var = tk.StringVar(value="Thường (1.0x)")
-        self.speed_combo = ctk.CTkComboBox(
-            inner1, variable=self.speed_var,
-            values=["Chậm (0.8x)", "Thường (1.0x)", "Nhanh (1.25x)", "Rất nhanh (1.5x)"],
-            state="readonly", width=140,
-        )
-        self.speed_combo.set("Thường (1.0x)")
-        self.speed_combo.pack(side="left", padx=(8, 0))
+        # ── Tabview: 2 sub-tabs ──
+        self.tabview = ctk.CTkTabview(self, corner_radius=8, fg_color="#1E2130",
+                                       border_width=1, border_color="#2A2D3E")
+        self.tabview.pack(fill="x", padx=16, pady=(4, 2))
 
-        # ── Card: Voice Cloning ──
-        card2 = ctk.CTkFrame(self, fg_color="#1E2130", border_width=1,
-                             border_color="#2A2D3E", corner_radius=8)
-        card2.pack(fill="x", padx=16, pady=4)
-        inner2 = ctk.CTkFrame(card2, fg_color="transparent")
-        inner2.pack(fill="x", padx=16, pady=8)
-
-        ctk.CTkLabel(inner2, text="Voice Cloning",
-                     font=("Segoe UI", 14, "bold")).pack(anchor="w")
-        r2 = ctk.CTkFrame(inner2, fg_color="transparent")
-        r2.pack(fill="x", pady=(4, 0))
-        ctk.CTkButton(r2, image=self._img_add, text="",
-                      command=self._select_ref_audio,
-                      width=32, height=32, corner_radius=6).pack(side="left")
-        ctk.CTkLabel(r2, text="Chọn file giọng mẫu (3-5s)").pack(
-            side="left", padx=(4, 16))
-        self.ref_audio_label = ctk.CTkLabel(r2, text="Không dùng",
-                                            text_color="#8B8FA8")
-        self.ref_audio_label.pack(side="left")
-        self.ref_audio_path = None
+        tab1 = self.tabview.add("Giọng có sẵn")
+        tab2 = self.tabview.add("Giọng từ file")
+        self._build_tab_preset(tab1)
+        self._build_tab_import(tab2)
 
         # ── Text input ──
         ctk.CTkLabel(self, text="Nhập text:").pack(anchor="w",
-                    padx=16, pady=(16, 4))
+                    padx=16, pady=(8, 4))
         self.text_input = ctk.CTkTextbox(self, corner_radius=6,
-                                          border_width=1, border_color="#2A2D3E")
-        self.text_input.pack(fill="both", expand=True, padx=16)
+                                          border_width=1, border_color="#2A2D3E",
+                                          height=320)
+        self.text_input.pack(fill="x", padx=16)
 
         # ── Generate row ──
         row2 = ctk.CTkFrame(self, fg_color="transparent")
-        row2.pack(fill="x", padx=16, pady=16)
+        row2.pack(fill="x", padx=16, pady=(8, 4))
         self.gen_btn = ctk.CTkButton(row2, text="Tạo âm thanh",
                                       command=self._on_generate,
                                       corner_radius=6, height=36)
@@ -99,18 +73,50 @@ class GenAudioTab(ctk.CTkFrame):
         self.progress.pack(side="left", padx=(16, 0))
         self.progress.set(0)
 
-        # ── Card: file list + action buttons (grid) ──
+        # ── File list ──
         ctk.CTkLabel(self, text="Các file đã tạo:").pack(anchor="w", padx=16)
         card3 = ctk.CTkFrame(self, fg_color="#1E2130", border_width=1,
                              border_color="#2A2D3E", corner_radius=8)
-        card3.pack(fill="both", expand=True, padx=16,
-                   pady=(4, 16))
+        card3.pack(fill="both", expand=True, padx=16, pady=(4, 16))
         inner3 = ctk.CTkFrame(card3, fg_color="transparent")
         inner3.pack(fill="both", expand=True, padx=8, pady=8)
 
-        # ── File list (left) ──
+        # ── Horizontal button bar (pack trước để giữ chiều cao) ──
+        btn_bar = ctk.CTkFrame(inner3, fg_color="transparent")
+        btn_bar.pack(fill="x", side="bottom", pady=(8, 0))
+
+        self.preview_btn = ctk.CTkButton(btn_bar, image=self._img_play, text="  Phát",
+                                          command=self._play_selected,
+                                          width=90, height=34, corner_radius=6,
+                                          anchor="w")
+        self.preview_btn.pack(side="left", padx=(0, 6))
+        add_tooltip(self.preview_btn, "Phát thử file đã chọn")
+
+        preview_stop_btn = ctk.CTkButton(btn_bar, image=self._img_stop, text="  Dừng",
+                                          command=self._stop_play,
+                                          width=90, height=34, corner_radius=6,
+                                          anchor="w")
+        preview_stop_btn.pack(side="left", padx=(0, 6))
+        add_tooltip(preview_stop_btn, "Dừng phát")
+
+        preview_del_btn = ctk.CTkButton(btn_bar, image=self._img_delete, text="  Xoá",
+                                         command=self._delete_selected,
+                                         width=90, height=34, corner_radius=6,
+                                         fg_color="#EF4444", hover_color="#DC2626",
+                                         anchor="w")
+        preview_del_btn.pack(side="left", padx=(0, 6))
+        add_tooltip(preview_del_btn, "Xoá file đã chọn")
+
+        preview_folder_btn = ctk.CTkButton(btn_bar, image=self._img_folder,
+                                            text="  Mở thư mục",
+                                            command=self._open_output_dir,
+                                            width=130, height=34, corner_radius=6,
+                                            anchor="w")
+        preview_folder_btn.pack(side="left")
+        add_tooltip(preview_folder_btn, "Mở thư mục chứa file")
+
         list_container = ctk.CTkFrame(inner3, fg_color="transparent")
-        list_container.pack(side="left", fill="both", expand=True)
+        list_container.pack(fill="both", expand=True)
 
         scrollbar = tk.Scrollbar(list_container, orient="vertical",
                                  bg="#1A1D27", troughcolor="#0F1117")
@@ -126,38 +132,84 @@ class GenAudioTab(ctk.CTkFrame):
         self.file_listbox.pack(side="left", fill="both", expand=True)
         self.file_listbox.bind("<Double-Button-1>", lambda e: self._play_selected())
 
-        # ── Action buttons (vertical, right side) ──
-        btn_frame = ctk.CTkFrame(inner3, fg_color="transparent", width=48)
-        btn_frame.pack(side="right", fill="y", padx=(8, 2))
-        btn_frame.pack_propagate(False)
-        # center buttons vertically
-        btn_center = ctk.CTkFrame(btn_frame, fg_color="transparent")
-        btn_center.pack(expand=True)
+    # ── Engine switch ──
+    def _on_engine_change(self, choice):
+        is_omni = choice == "OmniVoice"
+        engine = self.model_loader.switch(choice)
+        voice_names = [label for label, _ in engine.voices]
 
-        self.preview_btn = ctk.CTkButton(btn_center, image=self._img_play, text="",
-                                          command=self._play_selected,
-                                          width=40, height=36, corner_radius=6)
-        self.preview_btn.pack(pady=(0, 6))
-        add_tooltip(self.preview_btn, "Phát thử")
+        self.voice_combo.configure(values=voice_names)
+        if voice_names:
+            self.voice_combo.set(voice_names[0])
 
-        preview_stop_btn = ctk.CTkButton(btn_center, image=self._img_stop, text="",
-                                          command=self._stop_play,
-                                          width=40, height=36, corner_radius=6)
-        preview_stop_btn.pack(pady=(0, 6))
-        add_tooltip(preview_stop_btn, "Dừng")
+        if is_omni:
+            self.tabview.set("Giọng từ file")
 
-        preview_del_btn = ctk.CTkButton(btn_center, image=self._img_delete, text="",
-                                         command=self._delete_selected,
-                                         width=40, height=36, corner_radius=6,
-                                         fg_color="#EF4444", hover_color="#DC2626")
-        preview_del_btn.pack(pady=(0, 6))
-        add_tooltip(preview_del_btn, "Xoá")
+    @property
+    def _current_engine(self):
+        return self.model_loader.get_engine(self.engine_var.get())
 
-        preview_folder_btn = ctk.CTkButton(btn_center, image=self._img_folder, text="",
-                                            command=self._open_output_dir,
-                                            width=40, height=36, corner_radius=6)
-        preview_folder_btn.pack()
-        add_tooltip(preview_folder_btn, "Mở thư mục")
+    # ── Sub-tab: Giọng có sẵn ──
+    def _build_tab_preset(self, parent):
+        inner = ctk.CTkFrame(parent, fg_color="transparent")
+        inner.pack(padx=16, pady=8)
+
+        ctk.CTkLabel(inner, text="Giọng đọc", text_color="#8B8FA8").pack(side="left")
+        self.voice_var = tk.StringVar()
+        voice_names = [
+            "Ngọc Lan", "Gia Bảo", "Thái Sơn", "Đức Trí", "Mỹ Duyên",
+            "Trúc Ly", "Xuân Vĩnh", "Trọng Hữu", "Bình An", "Ngọc Linh",
+        ]
+        self.voice_combo = ctk.CTkComboBox(
+            inner, variable=self.voice_var, values=voice_names,
+            state="readonly", width=320,
+        )
+        if voice_names:
+            self.voice_combo.set(voice_names[0])
+        self.voice_combo.pack(side="left", padx=(8, 0))
+
+        ctk.CTkLabel(inner, text="Tốc độ", text_color="#8B8FA8").pack(
+            side="left", padx=(16, 0))
+        self.speed_var = tk.StringVar(value="Thường (1.0x)")
+        self.speed_combo = ctk.CTkComboBox(
+            inner, variable=self.speed_var,
+            values=["Chậm (0.8x)", "Thường (1.0x)", "Nhanh (1.25x)", "Rất nhanh (1.5x)"],
+            state="readonly", width=140,
+        )
+        self.speed_combo.set("Thường (1.0x)")
+        self.speed_combo.pack(side="left", padx=(8, 0))
+
+    # ── Sub-tab: Giọng từ file ──
+    def _build_tab_import(self, parent):
+        inner = ctk.CTkFrame(parent, fg_color="transparent")
+        inner.pack(padx=16, pady=8)
+
+        row = ctk.CTkFrame(inner, fg_color="transparent")
+        row.pack(fill="x", pady=(0, 8))
+
+        ctk.CTkLabel(row, text="Tốc độ", text_color="#8B8FA8").pack(side="left")
+        self.imp_speed_var = tk.StringVar(value="Thường (1.0x)")
+        self.imp_speed_combo = ctk.CTkComboBox(
+            row, variable=self.imp_speed_var,
+            values=["Chậm (0.8x)", "Thường (1.0x)", "Nhanh (1.25x)", "Rất nhanh (1.5x)"],
+            state="readonly", width=140,
+        )
+        self.imp_speed_combo.set("Thường (1.0x)")
+        self.imp_speed_combo.pack(side="left")
+
+        file_row = ctk.CTkFrame(inner, fg_color="transparent")
+        file_row.pack(fill="x", pady=(8, 0))
+        ctk.CTkButton(file_row, image=self._img_add, text="",
+                      command=self._select_ref_audio,
+                      width=32, height=32, corner_radius=6).pack(side="left")
+        ctk.CTkLabel(file_row, text="Chọn file giọng mẫu (3-5s)").pack(
+            side="left", padx=(4, 16))
+        self.ref_audio_label = ctk.CTkLabel(file_row, text="Chưa chọn",
+                                            text_color="#F59E0B")
+        self.ref_audio_label.pack(side="left")
+        self.ref_audio_path = None
+
+        add_tooltip(file_row, "Chọn file WAV/MP3 để clone giọng")
 
     def _select_ref_audio(self):
         path = filedialog.askopenfilename(
@@ -174,16 +226,31 @@ class GenAudioTab(ctk.CTkFrame):
         if not text:
             messagebox.showwarning("Cảnh báo", "Vui lòng nhập text!")
             return
-        voice_label = self.voice_var.get()
-        if not voice_label:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn giọng đọc!")
-            return
 
-        voice_id = voice_label
-        for label, vid in self.audio_gen.voices:
-            if label == voice_label:
-                voice_id = vid
-                break
+        engine = self._current_engine
+        active_tab = self.tabview.get()
+
+        if active_tab == "Giọng có sẵn":
+            voice_label = self.voice_var.get()
+            if not voice_label:
+                messagebox.showwarning("Cảnh báo", "Vui lòng chọn giọng đọc!")
+                return
+            voice_id = voice_label
+            if hasattr(engine, 'voices'):
+                for label, vid in engine.voices:
+                    if label == voice_label:
+                        voice_id = vid
+                        break
+            ref_audio = None
+            speed_text = self.speed_var.get()
+        else:
+            if not self.ref_audio_path or not self.ref_audio_path.exists():
+                messagebox.showwarning("Cảnh báo",
+                    "Vui lòng chọn file giọng mẫu ở tab 'Giọng từ file'!")
+                return
+            ref_audio = self.ref_audio_path
+            speed_text = self.imp_speed_var.get()
+            voice_id = "default"
 
         existing = sorted(self.output_dir.glob("audio_*.mp3"))
         idx = 1
@@ -199,19 +266,16 @@ class GenAudioTab(ctk.CTkFrame):
         self.gen_btn.configure(state="disabled")
         self.progress.start()
 
-        speed_text = self.speed_var.get()
         speed_map = {"Chậm (0.8x)": 0.8, "Thường (1.0x)": 1.0,
                       "Nhanh (1.25x)": 1.25, "Rất nhanh (1.5x)": 1.5}
         target_speed = speed_map.get(speed_text, 1.0)
-
         self._pending_speed = target_speed
-        self._pending_mp3 = output_path
 
-        self.audio_gen.generate(
+        engine.generate(
             text=text,
             voice_name=voice_id,
             output_path=output_path,
-            ref_audio=self.ref_audio_path,
+            ref_audio=ref_audio,
             on_done=self._on_done,
             on_error=self._on_error,
         )

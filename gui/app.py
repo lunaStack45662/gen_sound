@@ -2,6 +2,8 @@ import customtkinter as ctk
 
 from core.audio_generator import AudioGenerator
 from core.audio_player import AudioPlayer
+from core.omnivoice_engine import OmniVoiceEngine
+from core.model_loader import ModelLoader
 from core.video_merger import VideoMerger
 from gui.tab_gen_audio import GenAudioTab
 from gui.tab_merge_audio import MergeAudioTab
@@ -25,8 +27,11 @@ class MainApp:
         self.root.geometry(f"{w}x{h}+{x}+{y}")
 
         self.player = AudioPlayer()
-        self.audio_gen = AudioGenerator(root=self.root)
         self.video_merger = VideoMerger()
+
+        self.model_loader = ModelLoader(root=self.root)
+        self.model_loader.register("Vieneu", lambda: AudioGenerator(root=self.root))
+        self.model_loader.register("OmniVoice", lambda: OmniVoiceEngine(root=self.root))
 
         tabs = ctk.CTkTabview(self.root, corner_radius=8)
         tabs.pack(fill="both", expand=True, padx=8, pady=8)
@@ -35,9 +40,9 @@ class MainApp:
         tab2 = tabs.add("  Ghép vào video  ")
         tab3 = tabs.add("  Nghe giọng mẫu  ")
 
-        self.tab1 = GenAudioTab(tab1, self.audio_gen, self.player)
+        self.tab1 = GenAudioTab(tab1, self.model_loader, self.player)
         self.tab2 = MergeAudioTab(tab2, self.video_merger, self.player)
-        self.tab3 = VoiceSamplesTab(tab3, self.audio_gen, self.player)
+        self.tab3 = VoiceSamplesTab(tab3, self.model_loader, self.player)
 
     def run(self):
         self.root.protocol("WM_DELETE_WINDOW", self._on_quit)

@@ -6,6 +6,7 @@ import customtkinter as ctk
 import imageio_ffmpeg
 
 from core.audio_generator import AudioGenerator
+from core.model_loader import ModelLoader
 from core.audio_player import AudioPlayer
 from gui.icons import Icons
 from gui.tooltip import add_tooltip
@@ -27,10 +28,37 @@ DEFAULT_TEXT = (
 )
 
 
+VOICE_LIST = [
+    ("Ngọc Lan", "Ngọc Lan"),
+    ("Gia Bảo", "Gia Bảo"),
+    ("Thái Sơn", "Thái Sơn"),
+    ("Đức Trí", "Đức Trí"),
+    ("Mỹ Duyên", "Mỹ Duyên"),
+    ("Trúc Ly", "Trúc Ly"),
+    ("Xuân Vĩnh", "Xuân Vĩnh"),
+    ("Trọng Hữu", "Trọng Hữu"),
+    ("Bình An", "Bình An"),
+    ("Ngọc Linh", "Ngọc Linh"),
+]
+
+DESC_MAP = {
+    "Ngọc Lan": "nữ, giọng dịu dàng",
+    "Gia Bảo": "nam, giọng mượt mà",
+    "Thái Sơn": "nam, giọng chắc khỏe",
+    "Đức Trí": "nam, giọng rõ ràng",
+    "Mỹ Duyên": "nữ, giọng mượt mà",
+    "Trúc Ly": "nữ, giọng trẻ trung",
+    "Xuân Vĩnh": "nam, giọng vui tươi",
+    "Trọng Hữu": "nam, giọng uyên bác",
+    "Bình An": "nam, giọng điềm đạm",
+    "Ngọc Linh": "nữ, giọng tươi sáng",
+}
+
+
 class VoiceSamplesTab(ctk.CTkFrame):
-    def __init__(self, parent, audio_gen, player: AudioPlayer):
+    def __init__(self, parent, model_loader: ModelLoader, player: AudioPlayer):
         super().__init__(parent, fg_color="transparent")
-        self.audio_gen = audio_gen
+        self.model_loader = model_loader
         self.player = player
         self.sample_dir = Path("output/samples")
         self.sample_dir.mkdir(parents=True, exist_ok=True)
@@ -73,7 +101,7 @@ class VoiceSamplesTab(ctk.CTkFrame):
 
     def _build_items(self):
         items = []
-        for label, vid in self.audio_gen.voices:
+        for label, vid in VOICE_LIST:
             text = DEMO_TEXTS.get(label, DEFAULT_TEXT)
             items.append((label, vid, text, self._slug(vid)))
         items.append(("Trúc Ly (có [cười])", "Trúc Ly",
@@ -132,7 +160,8 @@ class VoiceSamplesTab(ctk.CTkFrame):
             )
             self._gen_next()
 
-        self.audio_gen.generate(
+        engine = self.model_loader.get_engine("Vieneu")
+        engine.generate(
             text=text, voice_name=vid, output_path=path,
             on_done=on_done, on_error=on_error,
         )
@@ -247,16 +276,4 @@ class VoiceSamplesTab(ctk.CTkFrame):
         return 0.0
 
     def _get_desc(self, voice_id):
-        desc_map = {
-            "Ngọc Lan": "nữ, giọng dịu dàng",
-            "Gia Bảo": "nam, giọng mượt mà",
-            "Thái Sơn": "nam, giọng chắc khỏe",
-            "Đức Trí": "nam, giọng rõ ràng",
-            "Mỹ Duyên": "nữ, giọng mượt mà",
-            "Trúc Ly": "nữ, giọng trẻ trung",
-            "Xuân Vĩnh": "nam, giọng vui tươi",
-            "Trọng Hữu": "nam, giọng uyên bác",
-            "Bình An": "nam, giọng điềm đạm",
-            "Ngọc Linh": "nữ, giọng tươi sáng",
-        }
-        return desc_map.get(voice_id, "")
+        return DESC_MAP.get(voice_id, "")
