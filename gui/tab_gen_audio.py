@@ -31,8 +31,71 @@ class GenAudioTab(ctk.CTkFrame):
         self._img_folder = Icons.get("folder_open", 20)
         self._img_add = Icons.get("add", 20)
 
+        # ── Main horizontal split ──
+        main_pan = ctk.CTkFrame(self, fg_color="transparent")
+        main_pan.pack(fill="both", expand=True)
+
+        # ── Left sidebar: File list ──
+        sidebar = ctk.CTkFrame(main_pan, fg_color="#1E2130", border_width=1,
+                               border_color="#2A2D3E", corner_radius=8, width=200)
+        sidebar.pack(side="left", fill="y", padx=16, pady=8)
+        sidebar.pack_propagate(False)
+
+        ctk.CTkLabel(sidebar, text="  Các file đã tạo:", anchor="w").pack(
+            anchor="w", padx=12, pady=(12, 4))
+
+        list_container = ctk.CTkFrame(sidebar, fg_color="transparent")
+        list_container.pack(fill="both", expand=True, padx=8, pady=(0, 8))
+
+        scrollbar = tk.Scrollbar(list_container, orient="vertical",
+                                bg="#1A1D27", troughcolor="#0F1117")
+        self.file_listbox = tk.Listbox(list_container, yscrollcommand=scrollbar.set,
+                                     bg="#1A1D27", fg="#F1F1F3",
+                                     selectbackground="#3B82F6",
+                                     selectforeground="#F1F1F3",
+                                     relief="flat", borderwidth=0,
+                                     highlightthickness=0,
+                                     font=("Segoe UI", 11))
+        scrollbar.config(command=self.file_listbox.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.file_listbox.pack(side="left", fill="both", expand=True)
+        self.file_listbox.bind("<Double-Button-1>", lambda e: self._play_selected())
+
+        # Button bar in sidebar
+        btn_bar = ctk.CTkFrame(sidebar, fg_color="transparent")
+        btn_bar.pack(fill="x", pady=(8, 8))
+
+        self.preview_btn = ctk.CTkButton(btn_bar, image=self._img_play, text="",
+                                         command=self._play_selected,
+                                         width=28, height=28, corner_radius=6)
+        self.preview_btn.pack(side="left", padx=(12, 4))
+        add_tooltip(self.preview_btn, "Phát thử file đã chọn")
+
+        stop_btn = ctk.CTkButton(btn_bar, image=self._img_stop, text="",
+                                 command=self._stop_play,
+                                 width=28, height=28, corner_radius=6)
+        stop_btn.pack(side="left", padx=(0, 4))
+        add_tooltip(stop_btn, "Dừng phát")
+
+        del_btn = ctk.CTkButton(btn_bar, image=self._img_delete, text="",
+                                command=self._delete_selected,
+                                width=28, height=28, corner_radius=6,
+                                fg_color="#EF4444", hover_color="#DC2626")
+        del_btn.pack(side="left", padx=(0, 4))
+        add_tooltip(del_btn, "Xoá file đã chọn")
+
+        folder_btn = ctk.CTkButton(btn_bar, image=self._img_folder, text="",
+                                   command=self._open_output_dir,
+                                   width=28, height=28, corner_radius=6)
+        folder_btn.pack(side="left")
+        add_tooltip(folder_btn, "Mở thư mục chứa file")
+
+        # ── Right content: Engine + Tabs + Text + Generate ──
+        right_panel = ctk.CTkFrame(main_pan, fg_color="transparent")
+        right_panel.pack(side="right", fill="both", expand=True)
+
         # ── Engine selector ──
-        engine_row = ctk.CTkFrame(self, fg_color="transparent")
+        engine_row = ctk.CTkFrame(right_panel, fg_color="transparent")
         engine_row.pack(fill="x", padx=16, pady=(8, 2))
         ctk.CTkLabel(engine_row, text="Model TTS:", text_color="#8B8FA8").pack(side="left")
         self.engine_var = tk.StringVar(value="Vieneu")
@@ -44,9 +107,8 @@ class GenAudioTab(ctk.CTkFrame):
         add_tooltip(self.engine_combo, "Chuyển đổi giữa Vieneu và OmniVoice")
 
         # ── Tabview: 2 sub-tabs ──
-        self.tabview = ctk.CTkTabview(self, corner_radius=8, fg_color="#1E2130",
-                                        border_width=1, border_color="#2A2D3E",
-                                        height=110)
+        self.tabview = ctk.CTkTabview(right_panel, corner_radius=8, fg_color="#1E2130",
+                                       border_width=1, border_color="#2A2D3E")
         self.tabview.pack(fill="x", padx=16, pady=(4, 2))
 
         tab1 = self.tabview.add("Giọng có sẵn")
@@ -55,83 +117,24 @@ class GenAudioTab(ctk.CTkFrame):
         self._build_tab_import(tab2)
 
         # ── Text input ──
-        ctk.CTkLabel(self, text="Nhập text:").pack(anchor="w",
+        ctk.CTkLabel(right_panel, text="Nhập text:").pack(anchor="w",
                     padx=16, pady=(8, 4))
-        self.text_input = ctk.CTkTextbox(self, corner_radius=6,
+        self.text_input = ctk.CTkTextbox(right_panel, corner_radius=6,
                                           border_width=1, border_color="#2A2D3E",
                                           height=320)
         self.text_input.pack(fill="x", padx=16)
 
         # ── Generate row ──
-        row2 = ctk.CTkFrame(self, fg_color="transparent")
-        row2.pack(fill="x", padx=16, pady=(8, 4))
+        row2 = ctk.CTkFrame(right_panel, fg_color="transparent")
+        row2.pack(fill="x", padx=16, pady=(8, 16))
         self.gen_btn = ctk.CTkButton(row2, text="Tạo âm thanh",
-                                      command=self._on_generate,
-                                      corner_radius=6, height=36)
+                                     command=self._on_generate,
+                                     corner_radius=6, height=36)
         self.gen_btn.pack(side="left")
         add_tooltip(self.gen_btn, "Tạo file MP3 từ text với giọng đã chọn")
         self.progress = ctk.CTkProgressBar(row2, width=200)
         self.progress.pack(side="left", padx=(16, 0))
         self.progress.set(0)
-
-        # ── File list ──
-        ctk.CTkLabel(self, text="Các file đã tạo:").pack(anchor="w", padx=16)
-        card3 = ctk.CTkFrame(self, fg_color="#1E2130", border_width=1,
-                             border_color="#2A2D3E", corner_radius=8)
-        card3.pack(fill="both", expand=True, padx=16, pady=(4, 16))
-        inner3 = ctk.CTkFrame(card3, fg_color="transparent")
-        inner3.pack(fill="both", expand=True, padx=8, pady=8)
-
-        # ── Horizontal button bar (pack trước để giữ chiều cao) ──
-        btn_bar = ctk.CTkFrame(inner3, fg_color="transparent")
-        btn_bar.pack(fill="x", side="bottom", pady=(8, 0))
-
-        self.preview_btn = ctk.CTkButton(btn_bar, image=self._img_play, text="  Phát",
-                                          command=self._play_selected,
-                                          width=90, height=34, corner_radius=6,
-                                          anchor="w")
-        self.preview_btn.pack(side="left", padx=(0, 6))
-        add_tooltip(self.preview_btn, "Phát thử file đã chọn")
-
-        preview_stop_btn = ctk.CTkButton(btn_bar, image=self._img_stop, text="  Dừng",
-                                          command=self._stop_play,
-                                          width=90, height=34, corner_radius=6,
-                                          anchor="w")
-        preview_stop_btn.pack(side="left", padx=(0, 6))
-        add_tooltip(preview_stop_btn, "Dừng phát")
-
-        preview_del_btn = ctk.CTkButton(btn_bar, image=self._img_delete, text="  Xoá",
-                                         command=self._delete_selected,
-                                         width=90, height=34, corner_radius=6,
-                                         fg_color="#EF4444", hover_color="#DC2626",
-                                         anchor="w")
-        preview_del_btn.pack(side="left", padx=(0, 6))
-        add_tooltip(preview_del_btn, "Xoá file đã chọn")
-
-        preview_folder_btn = ctk.CTkButton(btn_bar, image=self._img_folder,
-                                            text="  Mở thư mục",
-                                            command=self._open_output_dir,
-                                            width=130, height=34, corner_radius=6,
-                                            anchor="w")
-        preview_folder_btn.pack(side="left")
-        add_tooltip(preview_folder_btn, "Mở thư mục chứa file")
-
-        list_container = ctk.CTkFrame(inner3, fg_color="transparent")
-        list_container.pack(fill="both", expand=True)
-
-        scrollbar = tk.Scrollbar(list_container, orient="vertical",
-                                 bg="#1A1D27", troughcolor="#0F1117")
-        self.file_listbox = tk.Listbox(list_container, yscrollcommand=scrollbar.set,
-                                        bg="#1A1D27", fg="#F1F1F3",
-                                        selectbackground="#3B82F6",
-                                        selectforeground="#F1F1F3",
-                                        relief="flat", borderwidth=0,
-                                        highlightthickness=0,
-                                        font=("Segoe UI", 11))
-        scrollbar.config(command=self.file_listbox.yview)
-        scrollbar.pack(side="right", fill="y")
-        self.file_listbox.pack(side="left", fill="both", expand=True)
-        self.file_listbox.bind("<Double-Button-1>", lambda e: self._play_selected())
 
     # ── Engine switch ──
     def _on_engine_change(self, choice):
@@ -220,7 +223,7 @@ class GenAudioTab(ctk.CTkFrame):
         if path:
             self.ref_audio_path = Path(path)
             self.ref_audio_label.configure(text=self.ref_audio_path.name,
-                                           text_color="#F1F1F3")
+                                         text_color="#F1F1F3")
 
     def _on_generate(self):
         text = self.text_input.get("1.0", "end-1c").strip()
@@ -268,7 +271,7 @@ class GenAudioTab(ctk.CTkFrame):
         self.progress.start()
 
         speed_map = {"Chậm (0.8x)": 0.8, "Thường (1.0x)": 1.0,
-                      "Nhanh (1.25x)": 1.25, "Rất nhanh (1.5x)": 1.5}
+                    "Nhanh (1.25x)": 1.25, "Rất nhanh (1.5x)": 1.5}
         target_speed = speed_map.get(speed_text, 1.0)
         self._pending_speed = target_speed
 
