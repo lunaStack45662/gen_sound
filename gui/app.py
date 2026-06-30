@@ -54,6 +54,10 @@ class MainApp:
         except Exception:
             pass
         try:
+            self.model_loader.cleanup()
+        except Exception:
+            pass
+        try:
             import pygame
             pygame.mixer.quit()
         except Exception:

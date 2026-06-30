@@ -33,6 +33,7 @@ class GenAudioTab(ctk.CTkFrame):
         self._img_folder = Icons.get("folder_open", 18)
         self._img_add = Icons.get("add", 18)
         self._img_play_small = Icons.get("play_arrow", 14)
+        self._img_stop_small = Icons.get("stop", 14)
         self._img_delete_small = Icons.get("delete", 14)
 
         main_pan = ctk.CTkFrame(self, fg_color="transparent")
@@ -262,7 +263,7 @@ class GenAudioTab(ctk.CTkFrame):
         messagebox.showerror("Lỗi", f"Tạo âm thanh thất bại:\n{error}")
 
     def _refresh_file_list(self):
-        for frame, _ in self._file_widgets:
+        for frame, _, _ in self._file_widgets:
             frame.destroy()
         self._file_widgets.clear()
         files = sorted(self.output_dir.glob("*.mp3"))
@@ -303,7 +304,7 @@ class GenAudioTab(ctk.CTkFrame):
     def _play_file(self, path, btn=None):
         self.player.stop()
         if btn:
-            btn.configure(image=self._img_stop)
+            btn.configure(image=self._img_stop_small)
         def on_finish():
             self.preview_btn.configure(image=self._img_play)
         self.player.play(path, on_finish=on_finish)
