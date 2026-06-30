@@ -5,6 +5,7 @@ COLORS = {
     "bg_secondary": "#1A1D27",
     "bg_hover":     "#252836",
     "bg_card":      "#1E2130",
+    "bg_sidebar":   "#161926",
     "accent":       "#7C6FF7",
     "accent_hover": "#9B96F8",
     "text_primary": "#F1F1F3",
@@ -33,6 +34,13 @@ SPACING = {
     "md": 16,
     "lg": 24,
     "xl": 32,
+}
+
+RADIUS = {
+    "sm": 4,
+    "md": 8,
+    "lg": 12,
+    "xl": 16,
 }
 
 SEGMENT_COLORS = [
