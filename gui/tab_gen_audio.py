@@ -45,7 +45,8 @@ class GenAudioTab(ctk.CTkFrame):
 
         # ── Tabview: 2 sub-tabs ──
         self.tabview = ctk.CTkTabview(self, corner_radius=8, fg_color="#1E2130",
-                                       border_width=1, border_color="#2A2D3E")
+                                        border_width=1, border_color="#2A2D3E",
+                                        height=110)
         self.tabview.pack(fill="x", padx=16, pady=(4, 2))
 
         tab1 = self.tabview.add("Giọng có sẵn")
