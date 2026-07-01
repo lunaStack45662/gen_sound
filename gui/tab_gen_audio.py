@@ -42,7 +42,7 @@ class GenAudioTab(ctk.CTkFrame):
         # Left sidebar
         sidebar = ctk.CTkFrame(main_pan, fg_color=COLORS["bg_sidebar"],
                                border_width=1, border_color=COLORS["border"],
-                               corner_radius=RADIUS["md"], width=220)
+                               corner_radius=RADIUS["md"], width=264)
         sidebar.pack(side="left", fill="y", padx=(SPACING["md"], SPACING["sm"]), pady=SPACING["sm"])
         sidebar.pack_propagate(False)
 

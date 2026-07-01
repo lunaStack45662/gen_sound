@@ -6,6 +6,7 @@ from core.omnivoice_engine import OmniVoiceEngine
 from core.model_loader import ModelLoader
 from core.video_merger import VideoMerger
 from gui.tab_gen_audio import GenAudioTab
+from gui.tab_image_editor import ImageEditorTab
 from gui.tab_merge_audio import MergeAudioTab
 from gui.tab_voice_samples import VoiceSamplesTab
 
@@ -33,16 +34,23 @@ class MainApp:
         self.model_loader.register("Vieneu", lambda: AudioGenerator(root=self.root))
         self.model_loader.register("OmniVoice", lambda: OmniVoiceEngine(root=self.root))
 
-        tabs = ctk.CTkTabview(self.root, corner_radius=8)
+        tabs = ctk.CTkTabview(self.root, corner_radius=8, command=self._on_tab_switch)
         tabs.pack(fill="both", expand=True, padx=8, pady=8)
 
         tab1 = tabs.add("  Tạo âm thanh  ")
         tab2 = tabs.add("  Ghép vào video  ")
         tab3 = tabs.add("  Nghe giọng mẫu  ")
+        tab4 = tabs.add("  Chỉnh ảnh  ")
+        self._tabs = tabs
 
         self.tab1 = GenAudioTab(tab1, self.model_loader, self.player)
         self.tab2 = MergeAudioTab(tab2, self.video_merger, self.player)
         self.tab3 = VoiceSamplesTab(tab3, self.model_loader, self.player)
+        self.tab4 = ImageEditorTab(tab4)
+
+    def _on_tab_switch(self):
+        if self._tabs.get() != "  Chỉnh ảnh  ":
+            self.tab4.cleanup()
 
     def run(self):
         self.root.protocol("WM_DELETE_WINDOW", self._on_quit)

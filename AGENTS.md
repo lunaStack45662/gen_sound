@@ -12,6 +12,7 @@ PythonProject/
 │   ├── __init__.py
 │   ├── audio_generator.py         ← Vieneu TTS: gen audio, adjust speed, voice clone
 │   ├── audio_player.py            ← pygame.mixer: play/stop preview trong app
+│   ├── image_editor.py            ← Xoá nền (rembg/SAM2), ghép nền, GPU upscale/sharpen/denoise
 │   └── video_merger.py            ← ffmpeg: ghép audio vào video tại timestamp
 ├── gui/                           ← UI layer (tkinter)
 │   ├── __init__.py
@@ -25,6 +26,7 @@ PythonProject/
 │   │   ├── segments.py             ← SegmentManager: add/remove/edit/drag + preview playback
 │   │   └── timeline.py             ← TimelineRenderer: thumbnails, playhead, segment bars
 │   ├── video_player_window.py     ← Backward-compat re-export
+│   ├── tab_image_editor.py        ← Tab 4: mở ảnh, xoá nền, ghép nền, upscale, làm nét
 │   ├── tab_voice_samples.py       ← Tab 3: danh sách giọng mẫu + phát thử 3 tốc độ
 │   ├── theme.py                   ← Design tokens: COLORS (dark), FONTS, SPACING, SEGMENT_COLORS
 │   ├── style.py                   ← apply_theme(): ttk.Style(clam) dark palette
@@ -53,6 +55,19 @@ PythonProject/
 - `stop()` → `fadeout(100ms)`
 - `is_playing` property → poll từ UI
 
+### core/image_editor.py
+- `ImageEditor.__init__()` → Khởi tạo
+- `load(path)` → Mở ảnh RGBA
+- `remove_background(image)` → Xoá nền bằng rembg (U²-Net, ONNX GPU)
+- `remove_background_sam2(image)` → Xoá nền bằng SAM2 (Meta, PyTorch GPU)
+- `replace_bg_image(image, bg_image)` → Ghép foreground lên ảnh nền
+- `upscale(image, scale)` → Phóng to 2x bằng bicubic GPU (torch interpolate)
+- `adjust_sharpness(image, factor)` → Làm nét GPU (avg_pool2d + unsharp mask)
+- `denoise(image, strength)` → Khử nhiễu GPU (conv2d Gaussian)
+- `save(image, path, quality)` → Lưu PNG/JPG/WEBP
+- `cleanup()` → Giải phóng GPU (GC + reset SAM2/ONNX session)
+- `gpu_info()` → Trả về thông tin GPU
+
 ### core/video_merger.py
 - `VideoMerger.__init__()` → `imageio_ffmpeg.get_ffmpeg_exe()`
 - `get_video_info(path)` → duration, has_audio, width, height
@@ -63,9 +78,10 @@ PythonProject/
 
 ### gui/app.py
 - 820x680, center màn hình, dark theme (#0F1117)
-- 3 tabs: "Tạo âm thanh" | "Ghép vào video" | "Nghe giọng mẫu"
+- 4 tabs: "Tạo âm thanh" | "Ghép vào video" | "Nghe giọng mẫu" | "Chỉnh ảnh"
 - Singleton: AudioPlayer, AudioGenerator, VideoMerger
 - Gọi `apply_theme()` từ gui/style.py
+- Phát hiện chuyển tab → tự động unload GPU khi rời tab "Chỉnh ảnh"
 
 ### gui/theme.py
 - COLORS: bg_primary (#0F1117), bg_secondary, accent (#7C6FF7), text_primary, ...
@@ -119,6 +135,13 @@ PythonProject/
 - Tự động phát khi mở (resume sau seek)
 - Edit segment dialog (Toplevel dark, entry + button Lưu)
 
+### gui/tab_image_editor.py
+- Toolbar: Mở ảnh, chọn model (SAM2/rembg), Xóa nền, Phóng to 2x, Làm nét, Khử nhiễu, Ảnh nền, Lưu, Reset
+- Canvas preview ảnh, tự động fit theo kích thước cửa sổ
+- Threaded GPU xử lý (không block UI)
+- Hiển thị trạng thái GPU (góc phải toolbar)
+- Chọn ảnh nền → tự động ghép với ảnh đã xoá nền
+
 ### gui/tab_voice_samples.py
 - Gen 11 file mẫu (10 giọng + Trúc Ly với `[cười]`) khi lần đầu chạy
 - Mỗi giọng 3 nút icon play → stop: Chậm (0.8x) / Thường (1.0x) / Nhanh (1.25x) + tooltip
@@ -127,17 +150,21 @@ PythonProject/
 
 ## Dependencies
 - vieneu==3.0.9 (v3 Turbo, 48 kHz)
-- torch==2.6.0+cu124 (CUDA 12.4)
+- torch==2.11.0+cu128 (CUDA 12.8)
+- sam2==1.1.0 (Meta SAM2 GPU segmentation)
+- rembg==2.0.76 (U²-Net background removal)
 - imageio-ffmpeg (bundled ffmpeg)
 - pygame==2.6.1 (audio playback)
 - opencv-python-headless (video frame reading)
 - Pillow (icon resize, image handling)
-- transformers, onnxruntime, tokenizers
+- transformers, onnxruntime-gpu, tokenizers
 
 ## GPU Requirements
 - NVIDIA RTX 3050 6GB (tested)
 - VRAM: ~2.1 GB khi infer, ~3.9 GB trống
-- CUDA 12.4 required
+- CUDA 12.8 required
+
+## Voice Cloning
 
 ## Voice Cloning
 - Input: file WAV/MP3 3-5s (ref_audio)
@@ -197,3 +224,4 @@ PythonProject/
 - `396cf00` — feat: bo góc segment + video canvas, tab icon
 - `edc41a7` — style: card containers + SPACING constants như Tailwind
 - `fe1f46d` — migrate to CustomTkinter (full GUI rewrite)
+- (current) — feat: thêm tab chỉnh ảnh (rembg/SAM2 xoá nền, GPU upscale/sharpen, ghép nền)
