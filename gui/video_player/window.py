@@ -75,6 +75,7 @@ class VideoPlayerWindow:
         self._img_delete = Icons.get("delete", 20)
         self._img_merge = Icons.get("merge", 20)
         self._img_edit = Icons.get("edit", 20)
+        self._img_folder = Icons.get("folder_open", 20)
 
         self.canvas = tk.Canvas(
             self.window, bg="black", highlightthickness=1,
@@ -152,6 +153,13 @@ class VideoPlayerWindow:
                                       width=36, height=36, corner_radius=6)
         self.add_btn.pack(side="left")
         add_tooltip(self.add_btn, "Thêm file audio vào timeline")
+
+        self.folder_btn = ctk.CTkButton(bot, image=self._img_folder, text="",
+                                         command=self._open_audio_folder,
+                                         width=36, height=36, corner_radius=6)
+        self.folder_btn.pack(side="left", padx=(0, 0))
+        add_tooltip(self.folder_btn, "Thêm audio từ thư mục đã gen")
+
         ctk.CTkLabel(bot, text="Thêm audio").pack(side="left", padx=(4, 16))
         self.sel_label = ctk.CTkLabel(bot, text="")
         self.sel_label.pack(side="left")
@@ -383,6 +391,28 @@ class VideoPlayerWindow:
     def _add_audio(self):
         path = filedialog.askopenfilename(
             title="Chọn file âm thanh",
+            filetypes=[("Audio files", "*.mp3 *.wav"), ("All files", "*.*")],
+        )
+        self.window.lift()
+        self.window.focus_force()
+        if not path:
+            return
+        seg = self.segments.add(path)
+        if seg is None:
+            messagebox.showerror("Lỗi", "Không đọc được duration audio!",
+                                 parent=self.window)
+            self.window.lift()
+            self.window.focus_force()
+            return
+        self._update_sel_label()
+        self._draw_all()
+
+    def _open_audio_folder(self):
+        audio_dir = Path("output/audio").resolve()
+        audio_dir.mkdir(parents=True, exist_ok=True)
+        path = filedialog.askopenfilename(
+            title="Chọn file âm thanh từ thư mục đã gen",
+            initialdir=str(audio_dir),
             filetypes=[("Audio files", "*.mp3 *.wav"), ("All files", "*.*")],
         )
         self.window.lift()
