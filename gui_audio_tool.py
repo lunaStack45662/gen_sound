@@ -1,10 +1,22 @@
+import json
 import os
 import sys
+from pathlib import Path
 
-os.environ["HF_TOKEN"] = "3FZ7pR81g40dVF043Rz5Uho6EPX_7LBfHH8xKxhHkM2pP45Z9"
-os.environ["HF_HUB_DISABLE_SYMLINKS"] = "1"
+config_path = Path(__file__).parent / "config.json"
+cfg = {}
+if config_path.exists():
+    with open(config_path, encoding="utf-8") as f:
+        cfg = json.load(f)
+
+hf_token = cfg.get("HF_TOKEN", "")
+if hf_token:
+    os.environ["HF_TOKEN"] = hf_token
+
+os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS", cfg.get("HF_HUB_DISABLE_SYMLINKS", "1"))
+os.environ.setdefault("TOKENIZERS_PARALLELISM", cfg.get("TOKENIZERS_PARALLELISM", "false"))
+
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")

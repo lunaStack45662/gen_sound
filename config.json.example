@@ -1,0 +1,8 @@
+{
+    "_comment": "Sao chép file này thành config.json (đã có trong .gitignore)",
+    "_comment2": "Chỉ cần config.json nếu bạn muốm override token từ HF cache (~/.cache/huggingface/token)",
+    "_comment3": "Lấy token tại: https://huggingface.co/settings/tokens",
+    "HF_TOKEN": "",
+    "HF_HUB_DISABLE_SYMLINKS": "1",
+    "TOKENIZERS_PARALLELISM": "false"
+}

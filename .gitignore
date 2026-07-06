@@ -40,4 +40,7 @@ MEMORY.md
 ~$*.pptx
 *.pptx
 
+# Config
+config.json
+
 phan.txt
