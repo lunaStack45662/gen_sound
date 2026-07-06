@@ -179,7 +179,7 @@ class ImageEditor:
         if ImageEditor._sam2_generator is not None:
             gen = ImageEditor._sam2_generator
             ImageEditor._sam2_generator = None
-            del predictor
+            del gen
             _gc.collect()
             if _has_cuda():
                 torch.cuda.empty_cache()

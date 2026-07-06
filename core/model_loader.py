@@ -21,6 +21,12 @@ class ModelLoader:
     def current_name(self):
         return self._current_name
 
+    def is_loaded(self, name):
+        if name not in self._engines:
+            return False
+        with self._lock:
+            return self._engines[name]["instance"] is not None
+
     def get_engine(self, name):
         if name not in self._engines:
             raise ValueError(f"Unknown engine: {name}")

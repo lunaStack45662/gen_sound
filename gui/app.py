@@ -1,5 +1,7 @@
 import customtkinter as ctk
 
+import threading
+
 from core.audio_generator import AudioGenerator
 from core.audio_player import AudioPlayer
 from core.omnivoice_engine import OmniVoiceEngine
@@ -48,9 +50,27 @@ class MainApp:
         self.tab3 = VoiceSamplesTab(tab3, self.model_loader, self.player)
         self.tab4 = ImageEditorTab(tab4)
 
+        self._preload_default_engine()
+
     def _on_tab_switch(self):
         if self._tabs.get() != "  Chỉnh ảnh  ":
             self.tab4.cleanup()
+
+    def _preload_default_engine(self):
+        def load():
+            try:
+                self.model_loader.get_engine("Vieneu")
+                self.root.after(0, self._on_vieneu_ready)
+            except Exception as e:
+                self.root.after(0, lambda: self._on_vieneu_error(str(e)))
+        t = threading.Thread(target=load, daemon=True)
+        t.start()
+
+    def _on_vieneu_ready(self):
+        self.tab1.on_engine_ready(True)
+
+    def _on_vieneu_error(self, error):
+        self.tab1.on_engine_ready(False, error)
 
     def run(self):
         self.root.protocol("WM_DELETE_WINDOW", self._on_quit)

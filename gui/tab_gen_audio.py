@@ -22,6 +22,7 @@ class GenAudioTab(ctk.CTkFrame):
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self._selected_path = None
         self._file_widgets = []
+        self._engine_ready = False
         self._build_ui()
         self._refresh_file_list()
         self.pack(fill="both", expand=True)
@@ -121,8 +122,8 @@ class GenAudioTab(ctk.CTkFrame):
 
         row2 = ctk.CTkFrame(right_panel, fg_color="transparent")
         row2.pack(fill="x", padx=SPACING["md"], pady=(SPACING["sm"], SPACING["md"]))
-        self.gen_btn = ctk.CTkButton(row2, text="Tạo âm thanh", command=self._on_generate,
-                                      corner_radius=RADIUS["sm"], height=36)
+        self.gen_btn = ctk.CTkButton(row2, text="Đang tải model...", command=self._on_generate,
+                                      corner_radius=RADIUS["sm"], height=36, state="disabled")
         self.gen_btn.pack(side="left")
         add_tooltip(self.gen_btn, "Tạo file MP3 từ text với giọng đã chọn")
         self.progress = ctk.CTkProgressBar(row2, width=200)
@@ -204,7 +205,19 @@ class GenAudioTab(ctk.CTkFrame):
             self.ref_audio_path = Path(path)
             self.ref_audio_label.configure(text=self.ref_audio_path.name, text_color="#F1F1F3")
 
+    def on_engine_ready(self, ready, error=None):
+        self._engine_ready = ready
+        if ready:
+            self.gen_btn.configure(state="normal", text="Tạo âm thanh")
+        else:
+            self.gen_btn.configure(state="disabled", text="Lỗi model")
+            if error:
+                messagebox.showerror("Lỗi", f"Không thể tải model TTS:\n{error}")
+
     def _on_generate(self):
+        if not self._engine_ready:
+            messagebox.showinfo("Đang tải", "Model TTS chưa sẵn sàng, vui lòng đợi...")
+            return
         text = self.text_input.get("1.0", "end-1c").strip()
         if not text:
             messagebox.showwarning("Cảnh báo", "Vui lòng nhập text!")
